@@ -153,7 +153,7 @@ export async function POST(req: Request) {
         // Handle Quota/Rate Limit Errors
         if (error.message?.includes('429') || error.status === 429 || error.message?.includes('quota')) {
             return NextResponse.json(
-                { error: 'Google API kotası aşıldı. Lütfen 1 dakika bekleyip tekrar deneyin. (Ücretsiz plan limiti)' },
+                { error: 'Google API hız sınırı (quota) aşıldı. Lütfen kısa bir süre bekleyip tekrar deneyin.' },
                 { status: 429 }
             );
         }
