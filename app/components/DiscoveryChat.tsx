@@ -95,6 +95,7 @@ export default function DiscoveryChat() {
                         setMessages(prev => [...prev, { role: 'ai', content: data.content }]);
 
                     } catch (error) {
+                        console.error("CSV Analysis error", error);
                         setMessages(prev => [...prev, { role: 'ai', content: "Veri analizi sırasında bir hata oluştu." }]);
                     } finally {
                         setIsLoading(false);
@@ -166,8 +167,9 @@ export default function DiscoveryChat() {
             extractJson(aiContent);
             setMessages(prev => [...prev, { role: 'ai', content: aiContent }]);
 
-        } catch (error: any) {
-            setMessages(prev => [...prev, { role: 'ai', content: error.message || "Bir hata oluştu. Lütfen tekrar deneyin." }]);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Bir hata oluştu. Lütfen tekrar deneyin.";
+            setMessages(prev => [...prev, { role: 'ai', content: message }]);
         } finally {
             setIsLoading(false);
         }

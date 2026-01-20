@@ -3,6 +3,7 @@ import { doc, setDoc, getDoc, collection, query, getDocs, orderBy, serverTimesta
 import { BrandIdentity } from './types';
 
 export const saveBrandIdentity = async (id: string, identity: BrandIdentity, name?: string) => {
+    if (!db) return false;
     try {
         const brandRef = doc(db, 'brands', id);
         await setDoc(brandRef, {
@@ -19,6 +20,7 @@ export const saveBrandIdentity = async (id: string, identity: BrandIdentity, nam
 };
 
 export const getBrandIdentity = async (id: string): Promise<BrandIdentity | null> => {
+    if (!db) return null;
     try {
         const brandRef = doc(db, 'brands', id);
         const docSnap = await getDoc(brandRef);
@@ -33,6 +35,7 @@ export const getBrandIdentity = async (id: string): Promise<BrandIdentity | null
 };
 
 export const listAllBrands = async () => {
+    if (!db) return [];
     try {
         const brandsRef = collection(db, 'brands');
         const q = query(brandsRef, orderBy('updatedAt', 'desc'));
@@ -40,7 +43,7 @@ export const listAllBrands = async () => {
         return querySnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
             id: doc.id,
             ...doc.data()
-        }));
+        } as BrandIdentity & { id: string; name: string }));
     } catch (error) {
         console.error("Error listing brands:", error);
         return [];
@@ -48,6 +51,7 @@ export const listAllBrands = async () => {
 };
 
 export const markAsConfirmed = async (id: string) => {
+    if (!db) return false;
     try {
         const brandRef = doc(db, 'brands', id);
         await setDoc(brandRef, { status: 'confirmed' }, { merge: true });
@@ -59,6 +63,7 @@ export const markAsConfirmed = async (id: string) => {
 };
 
 export const getHistorySummaryForAI = async () => {
+    if (!db) return "";
     try {
         const brandsRef = collection(db, 'brands');
         // Get last 5 confirmed projects
@@ -66,13 +71,13 @@ export const getHistorySummaryForAI = async () => {
         const querySnapshot = await getDocs(q);
         const confirmedBrands = querySnapshot.docs
             .map((doc: QueryDocumentSnapshot<DocumentData>) => doc.data())
-            .filter((b: any) => b.status === 'confirmed')
+            .filter((b: DocumentData) => b.status === 'confirmed')
             .slice(0, 5);
 
         if (confirmedBrands.length === 0) return "";
 
         let summary = "\n### GEÇMİŞ BAŞARILI PROJELER VE TERCİHLERİNİZ:\n";
-        confirmedBrands.forEach((b: any, i: number) => {
+        confirmedBrands.forEach((b: DocumentData, i: number) => {
             summary += `${i + 1}. MARK: ${b.name}\n`;
             summary += `   - Sektör: ${b.metadata?.industry || 'Genel'}\n`;
             summary += `   - DNA: ${b.brand_dna.purpose}\n`;

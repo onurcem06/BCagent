@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { listAllBrands } from '@/app/lib/brandsService';
+import { BrandIdentity } from '@/app/lib/types';
 import Link from 'next/link';
 import { LayoutGrid, Plus, Search, ExternalLink, Calendar, Trash2 } from 'lucide-react';
 
 export default function AdminDashboard() {
-    const [brands, setBrands] = useState<any[]>([]);
+    const [brands, setBrands] = useState<(BrandIdentity & { id: string; name?: string; updatedAt?: any })[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 

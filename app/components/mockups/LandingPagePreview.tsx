@@ -6,7 +6,6 @@ import { ChevronRight, Layout, Zap, Shield, Star } from 'lucide-react';
 
 export function LandingPagePreview({ identity }: { identity: BrandIdentity }) {
     const primaryColor = identity.color_palette.primary || '#3b82f6';
-    const secondaryColor = identity.color_palette.secondary || '#1e293b';
     const accentColor = identity.color_palette.accent || '#8b5cf6';
     const headingFont = identity.typography.heading_font || 'Inter';
     const bodyFont = identity.typography.body_font || 'Inter';

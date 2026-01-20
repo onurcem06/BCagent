@@ -2,14 +2,13 @@ import React from 'react';
 
 interface BusinessCardProps {
     primaryColor: string;
-    secondaryColor: string;
     accentColor: string;
     font: string;
     logoText: string;
     tagline: string;
 }
 
-export const BusinessCard: React.FC<BusinessCardProps> = ({ primaryColor, secondaryColor, accentColor, font, logoText, tagline }) => {
+export const BusinessCard: React.FC<BusinessCardProps> = ({ primaryColor, accentColor, font, logoText, tagline }) => {
     return (
         <div className="relative group perspective-1000">
             <div className="relative w-[280px] h-[160px] bg-white rounded-xl shadow-xl overflow-hidden transform transition-transform duration-500 group-hover:rotate-x-12 group-hover:rotate-y-12">

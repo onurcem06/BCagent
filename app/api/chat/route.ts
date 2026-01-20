@@ -2,6 +2,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from 'next/server';
 import { getHistorySummaryForAI } from '@/app/lib/brandsService';
 
+export const dynamic = 'force-dynamic';
+
 const SYSTEM_PROMPT = `
 Seni bir "Senior Brand Strategist, Sosyolog ve UI/UX Lead" olarak tanımlıyorum. 
 Görevin; kullanıcıdan gelen verileri analiz ederek, 8 kutudan oluşan kusursuz bir "Marka Kimliği" oluşturmaktır.
@@ -66,11 +68,11 @@ export async function POST(req: Request) {
         const model = genAI.getGenerativeModel({
             model: "gemini-2.0-flash",
             systemInstruction: fullSystemPrompt, // Use the fullSystemPrompt here
-            tools: [{ googleSearch: {} }]
+            tools: [{ googleSearch: {} }] as any[]
         });
 
         // Robust History Logic
-        let history = [];
+        let history: any[] = [];
         try {
             // Filter and sanitize history
             // We only use the 'messages' array which represents *past* history.

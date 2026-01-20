@@ -10,6 +10,7 @@ interface BrandStore {
     resetIdentity: () => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const deepMerge = (target: any, source: any): any => {
     const result = { ...target };
     for (const key in source) {

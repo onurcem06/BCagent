@@ -56,7 +56,7 @@ const ColorSwatch = ({ color, label }: { color: string; label: string }) => {
 
 // Helper for Web UI Preview
 const WebUIPreview = ({ data, fullIdentity }: { data: any, fullIdentity?: BrandIdentity }) => {
-    if (!data.button_style && !data.border_radius) return null;
+    if (!data || (!data.button_style && !data.border_radius)) return null;
 
     const getRadius = (text: string) => {
         if (!text) return '4px';
@@ -109,7 +109,7 @@ const WebUIPreview = ({ data, fullIdentity }: { data: any, fullIdentity?: BrandI
 
 // Helper for Social Media Preview
 const SocialMediaPreview = ({ data, fullIdentity }: { data: any, fullIdentity?: BrandIdentity }) => {
-    if (!data.visual_language && !data.grid_layout) return null;
+    if (!data || (!data.visual_language && !data.grid_layout)) return null;
 
     const primaryColor = fullIdentity?.color_palette.primary || '#000';
     const accentColor = fullIdentity?.color_palette.accent || '#888';
@@ -155,7 +155,7 @@ const SocialMediaPreview = ({ data, fullIdentity }: { data: any, fullIdentity?: 
 const GRID_MAPPING: {
     key: keyof BrandIdentity;
     title: string;
-    icon: any;
+    icon: React.ComponentType<any>;
     render: (data: any, fullIdentity?: BrandIdentity) => React.ReactNode
 }[] = [
         {
@@ -213,7 +213,7 @@ const GRID_MAPPING: {
             icon: Mic,
             render: (data) => data.tagline ? (
                 <div className="space-y-2">
-                    <div className="p-3 bg-purple-900/20 rounded-lg border border-purple-500/30 italic text-purple-200">"{data.tagline}"</div>
+                    <div className="p-3 bg-purple-900/20 rounded-lg border border-purple-500/30 italic text-purple-200">&quot;{data.tagline}&quot;</div>
                     <div><span className="text-purple-400 text-xs font-bold uppercase">Tone</span><p>{data.tone_of_voice}</p></div>
                 </div>
             ) : null
@@ -256,7 +256,7 @@ export default function BrandIdentityBoard() {
     const [viewMode, setViewMode] = useState<'strategy' | 'presentation' | 'guide'>('strategy');
     const [prompts, setPrompts] = useState<{ hero: string, social: string, logo: string } | null>(null);
     const [editingKey, setEditingKey] = useState<keyof BrandIdentity | null>(null);
-    const [editData, setEditData] = useState<any>(null);
+    const [editData, setEditData] = useState<Record<string, unknown> | string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isCanvaSyncing, setIsCanvaSyncing] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
@@ -286,8 +286,8 @@ export default function BrandIdentityBoard() {
             if (result.preview_url) {
                 window.open(result.preview_url, '_blank');
             }
-        } catch (error: any) {
-            alert("Canva Sync Failed: " + error.message);
+        } catch (error: unknown) {
+            alert("Canva Sync Failed: " + (error instanceof Error ? error.message : String(error)));
         } finally {
             setIsCanvaSyncing(false);
         }
@@ -367,9 +367,9 @@ export default function BrandIdentityBoard() {
         setEditingKey(key);
         const data = identity[key];
         if (typeof data === 'object' && data !== null) {
-            setEditData({ ...data });
+            setEditData({ ...data } as Record<string, unknown>);
         } else {
-            setEditData(data);
+            setEditData(data as string);
         }
     };
 
@@ -393,23 +393,23 @@ export default function BrandIdentityBoard() {
                         <button onClick={() => setEditingKey(null)} className="text-slate-400 hover:text-white">×</button>
                     </div>
                     <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                        {Object.keys(editData).map((field) => (
+                        {editData && typeof editData === 'object' && Object.keys(editData).map((field) => (
                             <div key={field} className="space-y-1">
                                 <label className="text-xs font-bold text-slate-500 uppercase">{field.replace(/_/g, ' ')}</label>
-                                {Array.isArray(editData[field]) ? (
+                                {Array.isArray((editData as any)[field]) ? (
                                     <input type="text" className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white"
-                                        value={editData[field].join(', ')}
-                                        onChange={(e) => setEditData({ ...editData, [field]: e.target.value.split(',').map((v: string) => v.trim()) })} />
-                                ) : field.includes('color') || ['primary', 'secondary', 'accent'].includes(field) ? (
+                                        value={((editData as any)[field] as string[]).join(', ')}
+                                        onChange={(e) => setEditData({ ...(editData as object), [field]: e.target.value.split(',').map((v: string) => v.trim()) })} />
+                                ) : (field.includes('color') || ['primary', 'secondary', 'accent'].includes(field)) ? (
                                     <div className="flex gap-2">
-                                        <input type="color" className="h-10 w-10 bg-transparent" value={editData[field].startsWith('#') ? editData[field] : '#000000'}
-                                            onChange={(e) => setEditData({ ...editData, [field]: e.target.value })} />
+                                        <input type="color" className="h-10 w-10 bg-transparent" value={String((editData as any)[field]).startsWith('#') ? String((editData as any)[field]) : '#000000'}
+                                            onChange={(e) => setEditData({ ...(editData as object), [field]: e.target.value })} />
                                         <input type="text" className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono"
-                                            value={editData[field]} onChange={(e) => setEditData({ ...editData, [field]: e.target.value })} />
+                                            value={String((editData as any)[field])} onChange={(e) => setEditData({ ...(editData as object), [field]: e.target.value })} />
                                     </div>
                                 ) : (
                                     <textarea className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white resize-none" rows={3}
-                                        value={editData[field]} onChange={(e) => setEditData({ ...editData, [field]: e.target.value })} />
+                                        value={String((editData as any)[field])} onChange={(e) => setEditData({ ...(editData as object), [field]: e.target.value })} />
                                 )}
                             </div>
                         ))}
@@ -466,7 +466,6 @@ export default function BrandIdentityBoard() {
                     <div className="bg-slate-100 w-full h-full flex items-center justify-center p-8">
                         <BusinessCard
                             primaryColor={identity.color_palette.primary}
-                            secondaryColor={identity.color_palette.secondary}
                             accentColor={identity.color_palette.accent}
                             font={identity.typography.heading_font}
                             logoText={identity.slogan_tone.tagline?.split(',')[0]}
