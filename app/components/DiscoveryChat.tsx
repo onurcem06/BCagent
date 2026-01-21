@@ -441,6 +441,5 @@ export default function DiscoveryChat() {
                     </div>
                 </div>
             </div>
-        </div>
-    );
+            );
 }
