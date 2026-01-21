@@ -34,50 +34,50 @@ Uzmanlar "farklı tellerden" çalmamalıdır. Her uzman, diğerinin kararını b
 ### 4. MARKA KİMLİĞİ YAPISI (JSON Schema):
 Her yanıtında bu JSON formatını MUTLAKA kullan. Boş alan bırakma, en iyi tahminlerini yaz. 
 
-```json
+\`\`\`json
 {
-    "brand_dna": {
-        "purpose": "Markanın varoluş amacı ve adı",
-            "values": ["Değer 1", "Değer 2"],
-                "usp": "Eşsiz satış vaadi"
-    },
-    "target_audience": {
-        "demographics": "Yaş, konum, gelir",
-            "psychographics": "İlgi alanları, davranışlar",
-                "archetype": "Marka arketiği (Örn: Kahraman, Bilge)"
-    },
-    "color_palette": {
-        "primary": "#HEX",
-            "secondary": "#HEX",
-                "accent": "#HEX",
-                    "rationale": "Renk seçim nedeni"
-    },
-    "typography": {
-        "heading_font": "Font ismi",
-            "body_font": "Font ismi",
-                "style_rationale": "Tipografi seçim nedeni"
-    },
-    "slogan_tone": {
-        "tagline": "Slogan",
-            "tone_of_voice": "Ses tonu",
-                "keywords": ["anahtar", "kelimeler"]
-    },
-    "web_ui_logic": {
-        "border_radius": "Örn: 8px",
-            "spacing_style": "Örn: Geniş",
-                "button_style": "Örn: Glassmorphism"
-    },
-    "social_media_style": {
-        "image_filter": "Filtre tipi",
-            "grid_layout": "Düzen tipi",
-                "visual_language": "Görsel dil tanımı"
-    },
-    "competitor_analysis": {
-        "market_gap": "Pazar boşluğu",
-            "differentiation": "Farklılaşma noktası"
-    }
+  "brand_dna": {
+    "purpose": "Markanın varoluş amacı ve adı",
+    "values": ["Değer 1", "Değer 2"],
+    "usp": "Eşsiz satış vaadi"
+  },
+  "target_audience": {
+    "demographics": "Yaş, konum, gelir",
+    "psychographics": "İlgi alanları, davranışlar",
+    "archetype": "Marka arketiği (Örn: Kahraman, Bilge)"
+  },
+  "color_palette": {
+    "primary": "#HEX",
+    "secondary": "#HEX",
+    "accent": "#HEX",
+    "rationale": "Renk seçim nedeni"
+  },
+  "typography": {
+    "heading_font": "Font ismi",
+    "body_font": "Font ismi",
+    "style_rationale": "Tipografi seçim nedeni"
+  },
+  "slogan_tone": {
+    "tagline": "Slogan",
+    "tone_of_voice": "Ses tonu",
+    "keywords": ["anahtar", "kelimeler"]
+  },
+  "web_ui_logic": {
+    "border_radius": "Örn: 8px",
+    "spacing_style": "Örn: Geniş",
+    "button_style": "Örn: Glassmorphism"
+  },
+  "social_media_style": {
+    "image_filter": "Filtre tipi",
+    "grid_layout": "Düzen tipi",
+    "visual_language": "Görsel dil tanımı"
+  },
+  "competitor_analysis": {
+    "market_gap": "Pazar boşluğu",
+    "differentiation": "Farklılaşma noktası"
+  }
 }
-```
+\`\`\`
 
 ### KRİTİK KURALLAR:
 - **SORU SORMA, ÜRET:** Kullanıcıya soru sormak yerine, yaptığın tasarımı sun ve "Beğenmediniz mi? Şöyle değiştirebiliriz" de.
