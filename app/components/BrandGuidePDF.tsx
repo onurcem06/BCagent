@@ -9,10 +9,10 @@ export default function BrandGuidePDF() {
     if (!identity.brand_dna.purpose) return null;
 
     return (
-        <div className="bg-white text-slate-900 p-12 max-w-4xl mx-auto shadow-2xl print:shadow-none print:p-0 my-8 print:my-0 rounded-xl overflow-hidden" id="brand-guide-content">
+        <div className="bg-white text-slate-900 p-8 md:p-12 max-w-4xl mx-auto shadow-2xl print:shadow-none print:p-0 my-0 print:my-0 rounded-xl overflow-hidden print:rounded-none" id="brand-guide-content">
             {/* Header / Cover */}
             <div
-                className="h-96 flex flex-col items-center justify-center text-white mb-12 rounded-lg relative overflow-hidden"
+                className="h-[600px] flex flex-col items-center justify-center text-white mb-12 rounded-lg relative overflow-hidden print:h-[1000px] print:rounded-none"
                 style={{ backgroundColor: identity.color_palette.primary || '#000' }}
             >
                 {identity.visuals?.hero_url && (

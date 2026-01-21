@@ -22,3 +22,29 @@ body {
   height: 100vh;
   overflow: hidden; /* Prevent body scroll, handle in components */
 }
+
+@media print {
+  body {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  
+  .print\:hidden,
+  aside, 
+  nav,
+  [class*="border-r"],
+  button {
+    display: none !important;
+  }
+
+  #brand-guide-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 2.5rem !important;
+    box-shadow: none !important;
+  }
+}

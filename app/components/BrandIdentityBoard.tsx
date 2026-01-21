@@ -251,6 +251,39 @@ const GRID_MAPPING: {
         },
     ];
 
+// Full-screen Modal for expanded view
+const ExpandedModal = ({ isOpen, onClose, children, title }: { isOpen: boolean; onClose: () => void; children: React.ReactNode; title: string }) => {
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 text-left">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl"
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        className="bg-slate-900 border border-slate-700/50 w-full max-w-6xl h-full max-h-[85vh] rounded-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col"
+                    >
+                        <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                            <h3 className="text-2xl font-bold text-white tracking-tight">{title}</h3>
+                            <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-all text-2xl">×</button>
+                        </div>
+                        <div className="flex-1 overflow-auto bg-white">
+                            {children}
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
+    );
+};
+
 export default function BrandIdentityBoard() {
     const { identity, updatePartialIdentity, currentBrandId, updateIdentity } = useBrandStore();
     const [viewMode, setViewMode] = useState<'strategy' | 'presentation' | 'guide'>('strategy');
@@ -261,6 +294,9 @@ export default function BrandIdentityBoard() {
     const [isCanvaSyncing, setIsCanvaSyncing] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
     const [activeSlide, setActiveSlide] = useState(0);
+    const [expandedView, setExpandedView] = useState<{ key: string; title: string } | null>(null);
+
+    const [regeneratingKey, setRegeneratingKey] = useState<keyof BrandIdentity | null>(null);
 
     const handleConfirm = async () => {
         if (!currentBrandId) return;
@@ -275,6 +311,40 @@ export default function BrandIdentityBoard() {
             console.error(err);
         } finally {
             setIsConfirming(false);
+        }
+    };
+
+    const handleRegenerate = async (key: keyof BrandIdentity) => {
+        const feedback = prompt(`${GRID_MAPPING.find(m => m.key === key)?.title} için neyi değiştirmek istersiniz? (Örn: Daha canlı renkler olsun, Fontlar daha modern olsun vb.)`);
+        if (!feedback) return;
+
+        setRegeneratingKey(key);
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [
+                        { role: 'user', content: `REVISION_ACTION: Sadece "${key}" alanını şu geri bildirime göre güncelle: ${feedback}\n\nLütfen sadece güncellenmiş JSON bloğunu gönder.` }
+                    ],
+                    newMessage: { role: 'user', content: `Lütfen ${key} kısmını revize et.` }
+                }),
+            });
+
+            if (!response.ok) throw new Error("Revizyon başarısız oldu.");
+
+            const data = await response.json();
+            const jsonRegex = /```json\s*([\s\S]*?)\s*```/;
+            const match = data.content.match(jsonRegex);
+            if (match && match[1]) {
+                const updatedData = JSON.parse(match[1].trim());
+                updatePartialIdentity(updatedData);
+            }
+        } catch (error) {
+            console.error("Regenerate Error:", error);
+            alert("Yeniden oluşturma sırasında bir hata oluştu.");
+        } finally {
+            setRegeneratingKey(null);
         }
     };
 
@@ -324,33 +394,21 @@ export default function BrandIdentityBoard() {
         if (!prompts) return;
         setIsGenerating(true);
         try {
-            // Sequential generation to avoid overloading (Pollinations is free)
-            const heroRes = await fetch('/api/generate-image', {
+            const response = await fetch('/api/generate-image', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: prompts.hero, type: 'hero' })
+                body: JSON.stringify({ identity, prompts })
             });
-            const { imageUrl: heroUrl } = await heroRes.json();
 
-            const socialRes = await fetch('/api/generate-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: prompts.social, type: 'social' })
-            });
-            const { imageUrl: socialUrl } = await socialRes.json();
+            if (!response.ok) throw new Error("Görsel üretimi başarısız oldu.");
 
-            const logoRes = await fetch('/api/generate-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: prompts.logo, type: 'logo' })
-            });
-            const { imageUrl: logoUrl } = await logoRes.json();
+            const data = await response.json();
 
             updatePartialIdentity({
                 visuals: {
-                    hero_url: heroUrl,
-                    social_url: socialUrl,
-                    logo_url: logoUrl
+                    hero_url: data.hero_url,
+                    social_url: data.social_url,
+                    logo_url: data.logo_url
                 }
             });
 
@@ -385,7 +443,7 @@ export default function BrandIdentityBoard() {
         if (!editingKey || !editData) return null;
         const title = GRID_MAPPING.find(m => m.key === editingKey)?.title || editingKey;
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-left">
+            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-left">
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                     className="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl">
                     <div className="p-6 border-b border-slate-800 flex justify-between items-center">
@@ -506,8 +564,8 @@ export default function BrandIdentityBoard() {
     };
 
     return (
-        <div className="h-full bg-slate-950 p-6 overflow-y-auto">
-            <div className="flex justify-between items-center mb-6 sticky top-0 bg-slate-950 z-20 pb-4 border-b border-slate-800/50">
+        <div className="h-full bg-slate-950 p-6 overflow-y-auto print:bg-white print:p-0">
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-slate-950 z-20 pb-4 border-b border-slate-800/50 print:hidden">
                 <div className="flex flex-col text-left">
                     <h2 className="text-2xl font-bold text-white tracking-tight">Branding Cockpit</h2>
                     <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Strategic Design Assistant</span>
@@ -550,21 +608,39 @@ export default function BrandIdentityBoard() {
                         const sectionData = identity[card.key];
                         const content = card.render(sectionData, identity);
                         const hasContent = !!content;
+                        const isVisual = card.key === 'web_ui_logic' || card.key === 'social_media_style';
+
                         return (
                             <motion.div key={card.key} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                                className={`relative p-5 rounded-xl border min-h-[160px] flex flex-col gap-3 group transition-all ${hasContent ? 'bg-slate-900 border-purple-500/30' : 'bg-slate-900/20 border-slate-800 border-dashed opacity-50'}`}>
+                                className={`relative p-5 rounded-xl border min-h-[160px] flex flex-col gap-3 group transition-all overflow-hidden ${hasContent ? 'bg-slate-900 border-purple-500/30' : 'bg-slate-900/20 border-slate-800 border-dashed opacity-50'}`}>
                                 <div className="flex items-center justify-between text-slate-400">
                                     <div className="flex items-center gap-2">
                                         <card.icon className={`w-4 h-4 ${hasContent ? 'text-purple-400' : ''}`} />
                                         <span className="text-xs font-bold uppercase tracking-wider">{card.title}</span>
                                     </div>
                                     {hasContent && (
-                                        <button onClick={() => startEditing(card.key)} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white">
-                                            <Edit3 className="w-3 h-3" />
-                                        </button>
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {isVisual && (
+                                                <button onClick={() => setExpandedView({ key: card.key, title: card.title })} className="p-1.5 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white" title="Büyüt">
+                                                    <LayoutGrid className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => handleRegenerate(card.key as keyof BrandIdentity)}
+                                                disabled={regeneratingKey === card.key}
+                                                className="p-1.5 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white transition-all disabled:opacity-30"
+                                                title="Yeniden Oluştur"
+                                            >
+                                                {regeneratingKey === card.key ? <RefreshCcw className="w-3.5 h-3.5 animate-spin" /> : <RefreshCcw className="w-3.5 h-3.5" />}
+                                            </button>
+                                            <button onClick={() => startEditing(card.key)} className="p-1.5 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white" title="Düzenle">
+                                                <Edit3 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
-                                <div className="flex-1 overflow-hidden">
+                                <div className={`flex-1 overflow-hidden ${isVisual && hasContent ? 'cursor-zoom-in hover:scale-[1.02] transition-transform' : ''}`}
+                                    onClick={() => isVisual && hasContent && setExpandedView({ key: card.key, title: card.title })}>
                                     {hasContent ? (
                                         <div className="text-sm text-slate-200 leading-relaxed font-medium">{content}</div>
                                     ) : (
@@ -578,9 +654,32 @@ export default function BrandIdentityBoard() {
             ) : viewMode === 'presentation' ? (
                 renderPresentationMode()
             ) : (
-                <BrandGuidePDF />
+                <div className="print:block">
+                    <BrandGuidePDF />
+                </div>
             )}
             {renderEditModal()}
+            <ExpandedModal
+                isOpen={!!expandedView}
+                onClose={() => setExpandedView(null)}
+                title={expandedView?.title || ''}
+            >
+                {expandedView?.key === 'web_ui_logic' && (
+                    <div className="w-full aspect-video">
+                        <LandingPagePreview identity={identity} />
+                    </div>
+                )}
+                {expandedView?.key === 'social_media_style' && (
+                    <div className="w-full flex justify-center p-8 bg-slate-100 h-full overflow-auto">
+                        <div className="w-[400px]">
+                            <PhonePreview>
+                                <SocialMediaPreview data={identity.social_media_style} fullIdentity={identity} />
+                            </PhonePreview>
+                        </div>
+                    </div>
+                )}
+            </ExpandedModal>
         </div>
     );
 }
+
