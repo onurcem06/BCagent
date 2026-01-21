@@ -126,9 +126,14 @@ export default function DiscoveryChat() {
             reader.onload = async (event) => {
                 const text = event.target?.result;
                 if (typeof text === 'string') {
-                    const dataPrompt = `DATA_IMPORT_ACTION: Aşağıdaki müşteri verilerini analiz et ve Marka Kimliği kutularını (özellikle Hedef Kitle ve USP) bu verilere dayanarak otomatik doldur.\n\nVERİ SETİ: \n${text.substring(0, 5000)}`;
+                    const dataPrompt = `DATA_IMPORT_ACTION: Aşağıdaki verileri analiz et. 
+1. Marka adını tespit et ve stratejiye işle.
+2. Marka Kimliği (8 Kutu) yapısındaki tüm alanları bu verilere dayanarak anında doldur.
+3. Eksik kalan kısımları analiz sonunda listeleyerek benden talep et.
 
-                    setMessages(prev => [...prev, { role: 'user', content: "📂 [CSV Verisi Yüklendi] Verileri analiz et ve marka kimliğini oluştur." }]);
+VERİ SETİ: \n${text.substring(0, 5000)}`;
+
+                    setMessages(prev => [...prev, { role: 'user', content: "📂 [Veri Dosyası Yüklendi] Analiz et ve marka stratejisini başlat." }]);
                     setIsLoading(true);
 
                     try {
