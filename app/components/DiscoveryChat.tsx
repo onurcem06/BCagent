@@ -416,26 +416,35 @@ export default function DiscoveryChat() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-                    {AGENCY_STAFF.map((staff) => (
-                        <button
-                            key={staff.id}
-                            onClick={() => {
-                                setInput(`@${staff.id}: `);
-                                textareaRef.current?.focus();
-                            }}
-                            className="w-full p-2.5 rounded-xl border border-slate-800/50 bg-slate-800/20 hover:bg-slate-800/40 hover:border-slate-700 transition-all text-left flex items-start gap-3 group relative overflow-hidden"
-                        >
-                            <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white shadow-lg ${staff.color}`}>
-                                {staff.id[0]}
-                            </div>
-                            <div className="flex flex-col gap-0.5 min-w-0">
-                                <span className="text-xs font-bold text-slate-200 truncate group-hover:text-purple-400 transition-colors">{staff.name}</span>
-                                <span className="text-[10px] text-slate-500 truncate">{staff.role}</span>
-                            </div>
-                            {/* Online Indicator */}
-                            <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-                        </button>
-                    ))}
+                    {AGENCY_STAFF.map((staff) => {
+                        const isThinking = isLoading;
+                        return (
+                            <button
+                                key={staff.id}
+                                onClick={() => {
+                                    setInput(`@${staff.id}: `);
+                                    textareaRef.current?.focus();
+                                }}
+                                className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start gap-3 group relative overflow-hidden ${isThinking ? 'border-amber-500/30 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.05)]' : 'border-slate-800/50 bg-slate-800/20 hover:bg-slate-800/40 hover:border-slate-700'
+                                    }`}
+                            >
+                                <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white shadow-lg ${staff.color} ${isThinking && 'animate-bounce shadow-xl ring-2 ring-amber-500/30'}`}>
+                                    {staff.id[0]}
+                                </div>
+                                <div className="flex flex-col gap-0.5 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-xs font-bold truncate transition-colors ${isThinking ? 'text-amber-200' : 'text-slate-200 group-hover:text-purple-400'}`}>
+                                            {staff.name}
+                                        </span>
+                                        {isThinking && <Loader2 className="w-2 h-2 text-amber-500 animate-spin" />}
+                                    </div>
+                                    <span className="text-[10px] text-slate-500 truncate">{staff.role}</span>
+                                </div>
+                                {/* Online Indicator */}
+                                <div className={`absolute top-2 right-2 w-1.5 h-1.5 rounded-full ${isThinking ? 'bg-amber-500 animate-ping' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]'}`} />
+                            </button>
+                        );
+                    })}
                 </div>
 
                 <div className="p-4 border-t border-slate-800/50 bg-slate-950/40">
