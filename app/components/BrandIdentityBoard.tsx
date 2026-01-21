@@ -114,39 +114,79 @@ const SocialMediaPreview = ({ data, fullIdentity }: { data: any, fullIdentity?: 
     const primaryColor = fullIdentity?.color_palette.primary || '#000';
     const accentColor = fullIdentity?.color_palette.accent || '#888';
     const font = fullIdentity?.typography.heading_font || 'sans-serif';
+    const bodyFont = fullIdentity?.typography.body_font || 'sans-serif';
     const socialImageUrl = fullIdentity?.visuals?.social_url;
-
-    const bgStyle = {
-        background: `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)`
-    };
+    const logoUrl = fullIdentity?.visuals?.logo_url;
+    const brandName = fullIdentity?.slogan_tone.tagline?.split(',')[0] || "Brand";
 
     return (
-        <div className="w-full h-full flex flex-col bg-white">
-            <div className="h-12 border-b flex items-center px-4 justify-between shrink-0">
-                <span className="font-bold text-sm">Brand</span>
-                <span className="text-xs text-gray-500">Posts</span>
+        <div className="w-full h-full flex flex-col bg-white text-slate-900 font-sans">
+            {/* Instagram Header */}
+            <div className="h-14 flex items-center px-4 justify-between shrink-0 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
+                        {logoUrl ? <img src={logoUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: primaryColor }} />}
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="font-bold text-[13px] leading-tight flex items-center gap-1">
+                            {brandName.toLowerCase().replace(/\s+/g, '_')}
+                            <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                                <CheckCircle2 className="w-2 h-2 text-white" />
+                            </div>
+                        </span>
+                        <span className="text-[11px] text-slate-500 leading-tight">Sponsorlu</span>
+                    </div>
+                </div>
+                <button className="text-slate-400">•••</button>
             </div>
-            <div className="flex-1 p-1 bg-gray-50 grid grid-cols-1 gap-1 overflow-auto">
-                <div className="aspect-square w-full rounded relative overflow-hidden flex items-center justify-center p-4 text-center" style={bgStyle}>
+
+            {/* Post Content */}
+            <div className="flex-1 overflow-auto bg-slate-50 flex flex-col">
+                <div className="aspect-square w-full relative flex items-center justify-center overflow-hidden bg-slate-200">
                     {socialImageUrl ? (
-                        <img src={socialImageUrl} className="absolute inset-0 w-full h-full object-cover" alt="Social Brand Visual" />
+                        <img src={socialImageUrl} className="w-full h-full object-cover" alt="Social Post" />
                     ) : (
-                        <>
-                            <div className="absolute inset-0 bg-black/20"></div>
-                            <p className="text-white relative z-10 text-lg font-bold drop-shadow-lg" style={{ fontFamily: font }}>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center" style={{ background: `linear-gradient(45deg, ${primaryColor}, ${accentColor})` }}>
+                            <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px]"></div>
+                            <h4 className="text-white relative z-10 text-3xl font-black italic tracking-tighter drop-shadow-2xl" style={{ fontFamily: font }}>
                                 {fullIdentity?.slogan_tone.tagline?.split(',')[0]}
+                            </h4>
+                            <p className="text-white/80 relative z-10 text-sm mt-4 font-medium uppercase tracking-[0.2em]" style={{ fontFamily: bodyFont }}>
+                                {fullIdentity?.brand_dna.usp?.substring(0, 40)}...
                             </p>
-                        </>
+                            <div className="mt-8 px-6 py-2 bg-white text-slate-900 text-xs font-bold rounded-sm shadow-xl relative z-10">
+                                ŞİMDİ İNCELE
+                            </div>
+                        </div>
                     )}
                 </div>
-                <div className="aspect-square w-full bg-slate-200 rounded flex items-center justify-center text-slate-400 text-xs">
-                    Image 2
+
+                {/* Engagement Bar */}
+                <div className="p-3 space-y-2 bg-white">
+                    <div className="flex items-center justify-between text-slate-800">
+                        <div className="flex items-center gap-4">
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.077 2.5 12.194 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.03.044.07.086.117.126a4.21 4.21 0 0 1 3.675-1.941c.03-.044.07-.086.117-.126Z" /></svg>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m.516 4.842C10.15 14.59 11 13.39 11 12c0-1.39-.85-2.59-1.8-3.5m4.3.5C14.45 10 15 10.95 15 12c0 1.05-.55 2-1.5 3m1.8-4.842C16.114 11.062 16.5 11.512 16.5 12c0 .488-.386.938-1.2 1.342M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                    </div>
+                    <div className="text-[13px] font-bold">1,204 beğenme</div>
+                    <div className="text-[13px] leading-snug">
+                        <span className="font-bold mr-2">{brandName.toLowerCase().replace(/\s+/g, '_')}</span>
+                        {fullIdentity?.slogan_tone.tagline?.split(',')[1] || "Modern ve vizyoner bir gelecek için..."}
+                        <span className="text-blue-900 ml-1">#brand #design #expert</span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 uppercase tracking-tight mt-1">2 saat önce</div>
                 </div>
             </div>
-            <div className="h-10 border-t flex justify-around items-center shrink-0">
-                <div className="w-5 h-5 bg-gray-300 rounded-full"></div>
-                <div className="w-5 h-5 bg-gray-300 rounded-full"></div>
-                <div className="w-5 h-5 bg-gray-300 rounded-full"></div>
+
+            {/* Tab Bar */}
+            <div className="h-12 border-t flex justify-around items-center shrink-0 bg-white">
+                <div className="w-6 h-6 bg-slate-900 rounded-sm"></div>
+                <div className="w-6 h-6 border-2 border-slate-300 rounded-sm"></div>
+                <div className="w-6 h-6 border-2 border-slate-300 rounded-sm"></div>
+                <div className="w-6 h-6 border-2 border-slate-300 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold">B</div>
             </div>
         </div>
     );
@@ -325,9 +365,9 @@ export default function BrandIdentityBoard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: [
-                        { role: 'user', content: `REVISION_ACTION: Sadece "${key}" alanını şu geri bildirime göre güncelle: ${feedback}\n\nLütfen sadece güncellenmiş JSON bloğunu gönder.` }
+                        { role: 'user', content: `CURRENT_IDENTITY: ${JSON.stringify(identity)}\n\nREVISION_ACTION: Sadece "${key}" alanını şu geri bildirime göre güncelle: ${feedback}\n\nLütfen önceki verileri (renkler, fontlar, sloganlar) koruyarak sadece istenen değişikliği yap ve TÜM objeyi geri döndür.` }
                     ],
-                    newMessage: { role: 'user', content: `Lütfen ${key} kısmını revize et.` }
+                    newMessage: { role: 'user', content: `Mevcut tasarım üzerinden ${key} kısmını güncelle.` }
                 }),
             });
 

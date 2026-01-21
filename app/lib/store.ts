@@ -14,11 +14,16 @@ interface BrandStore {
 const deepMerge = (target: any, source: any): any => {
     const result = { ...target };
     for (const key in source) {
-        if (source[key] instanceof Object && key in target) {
-            Object.assign(source[key], deepMerge(target[key], source[key]));
+        if (source[key] != null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+            if (key in target && target[key] != null && typeof target[key] === 'object') {
+                result[key] = deepMerge(target[key], source[key]);
+            } else {
+                result[key] = { ...source[key] };
+            }
+        } else {
+            result[key] = source[key];
         }
     }
-    Object.assign(result || {}, source);
     return result;
 };
 
