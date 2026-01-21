@@ -1,15 +1,22 @@
 import { db } from './firebase';
-import { doc, setDoc, getDoc, collection, query, getDocs, orderBy, serverTimestamp, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, getDocs, orderBy, serverTimestamp, DocumentData, QueryDocumentSnapshot, deleteDoc } from 'firebase/firestore';
 import { BrandIdentity } from './types';
 
 export const saveBrandIdentity = async (id: string, identity: BrandIdentity, name?: string) => {
     if (!db) return false;
     try {
         const brandRef = doc(db, 'brands', id);
+
+        // Priority: Passed name > Tagline > Purpose (first line) > Default
+        const brandName = name
+            || identity.slogan_tone.tagline?.split(',')[0]
+            || identity.brand_dna.purpose?.split('\n')[0]?.substring(0, 50)
+            || 'Untitled Brand';
+
         await setDoc(brandRef, {
             ...identity,
             id,
-            name: name || identity.slogan_tone.tagline?.split(',')[0] || 'Untitled Brand',
+            name: brandName,
             updatedAt: serverTimestamp()
         }, { merge: true });
         return true;
@@ -93,7 +100,6 @@ export const getHistorySummaryForAI = async () => {
 export const deleteBrand = async (id: string) => {
     if (!db) return false;
     try {
-        const { deleteDoc } = await import('firebase/firestore');
         const brandRef = doc(db, 'brands', id);
         await deleteDoc(brandRef);
         return true;

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Folder, Plus, Trash2, History, ChevronRight, Loader2, Search } from 'lucide-react';
+import { Folder, Plus, Trash2, History, ChevronRight, Loader2, Search, X } from 'lucide-react';
 import { listAllBrands, getBrandIdentity, deleteBrand } from '../lib/brandsService';
+import { db } from '../lib/firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { useBrandStore } from '../lib/store';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,21 +15,36 @@ export default function BrandLibrary({ onClose }: { onClose?: () => void }) {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const fetchBrands = async () => {
+    useEffect(() => {
+        if (!db) return;
+
         setIsLoading(true);
-        try {
-            const allBrands = await listAllBrands();
+        const brandsRef = collection(db, 'brands');
+        const q = query(brandsRef, orderBy('updatedAt', 'desc'));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const allBrands = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            } as any));
             // Filter out soft-deleted brands
             setBrands(allBrands.filter(b => !b.deleted));
-        } catch (error) {
-            console.error("Failed to fetch brands", error);
-        } finally {
             setIsLoading(false);
-        }
-    };
+        }, (error) => {
+            console.error("Failed to fetch brands", error);
+            // Fallback for missing index: try without order
+            const simpleQ = query(brandsRef);
+            onSnapshot(simpleQ, (snapshot) => {
+                const allBrands = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                } as any));
+                setBrands(allBrands.filter(b => !b.deleted));
+                setIsLoading(false);
+            });
+        });
 
-    useEffect(() => {
-        fetchBrands();
+        return () => unsubscribe();
     }, []);
 
     const handleSelectBrand = async (id: string) => {

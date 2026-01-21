@@ -108,6 +108,21 @@ export default function DiscoveryChat() {
         return () => clearTimeout(timer);
     }, [identity, currentBrandId]);
 
+    // Reset messages when switching brands to avoid context confusion
+    const isInitialMount = useRef(true);
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
+        if (currentBrandId) {
+            setMessages([
+                { role: 'ai', content: "[DİREKTÖR]: Kütüphaneden seçilen marka yüklendi. Strateji tahtası güncellendi. Mevcut veriler üzerinden devam edebilir veya yeni revizyonlar isteyebilirsiniz.\n\nNasıl ilerleyelim?" }
+            ]);
+        }
+    }, [currentBrandId]);
+
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
