@@ -8,10 +8,45 @@ import { v4 as uuidv4 } from 'uuid';
 import BrandLibrary from './BrandLibrary';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const ROLE_COLORS: Record<string, string> = {
+    '[DİREKTÖR]': 'border-purple-500/50 bg-purple-500/10 text-purple-200',
+    '[TASARIMCI]': 'border-blue-500/50 bg-blue-500/10 text-blue-200',
+    '[PAZARLAMACI]': 'border-green-500/50 bg-green-500/10 text-green-200',
+    '[METİN]': 'border-pink-500/50 bg-pink-500/10 text-pink-200',
+    '[LOGO]': 'border-amber-500/50 bg-amber-500/10 text-amber-200',
+};
+
+const MessageContent = ({ content }: { content: string }) => {
+    const parts = content.split(/(\[[A-ZİÜÖĞÇ\s]+\]:)/g);
+    if (parts.length <= 1) return <div className="whitespace-pre-wrap">{content}</div>;
+    return (
+        <div className="space-y-4">
+            {parts.map((part, i) => {
+                const roleMatch = part.match(/^(\[[A-ZİÜÖĞÇ\s]+\]):$/);
+                if (roleMatch) {
+                    const currentRole = roleMatch[1];
+                    const colorClasses = ROLE_COLORS[currentRole] || 'border-slate-500/50 bg-slate-500/10 text-slate-200';
+                    return (
+                        <div key={i} className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded border w-fit mb-1 mt-3 first:mt-0 ${colorClasses}`}>
+                            {currentRole.replace(/[\[\]]/g, '')}
+                        </div>
+                    );
+                }
+                if (!part.trim()) return null;
+                return (
+                    <div key={i} className="text-sm leading-relaxed text-slate-200 whitespace-pre-wrap pl-1 border-l-2 border-slate-800/50 ml-1 py-1">
+                        {part}
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
 export default function DiscoveryChat() {
     const { identity, updatePartialIdentity, currentBrandId, setCurrentBrandId } = useBrandStore();
     const [messages, setMessages] = useState<{ role: 'ai' | 'user'; content: string; image?: string | null }[]>([
-        { role: 'ai', content: "Merhaba, ben Master Orchestrator. Bugün ekibimle (Stratejist, Tasarımcı ve Pazarlamacı) markanızı dünya standartlarında inşa edeceğiz. Başlamadan önce, bu markanın varoluş hikayesini bana anlatır mısınız?" }
+        { role: 'ai', content: "[DİREKTÖR]: Merhaba! Branding Cockpit'e hoş geldiniz. Bugün markanızın temellerini uzman ekibimle birlikte inşa edeceğiz.\n\nBaşlamadan önce ajans protokolümüz gereği şu bilgilere ihtiyacımız var:\n1. Markanızın adı (Veya bulmamızı ister misiniz?)\n2. Sektörünüz ve varsa web sitesi linkiniz\n3. İlham verebilecek referans markalar veya dosyalar\n\nHangi marka üzerinde çalışıyoruz?" }
     ]);
 
     const [input, setInput] = useState('');
@@ -270,11 +305,22 @@ export default function DiscoveryChat() {
                             ? 'bg-purple-600 text-white rounded-br-none shadow-purple-900/20'
                             : 'bg-slate-800/90 text-slate-200 rounded-bl-none border border-slate-700/50 backdrop-blur-sm'
                             }`}>
-                            {msg.role === 'ai' ? msg.content.replace(/```json[\s\S]*?```/g, '').trim() : msg.content}
+                            {msg.role === 'ai' ? (
+                                <MessageContent content={msg.content.replace(/```json[\s\S]*?```/g, '').trim()} />
+                            ) : (
+                                <div className="whitespace-pre-wrap">{msg.content}</div>
+                            )}
                             {msg.role === 'ai' && msg.content.includes('```json') && (
-                                <div className="mt-3 pt-2 border-t border-slate-700/50 flex items-center gap-2 text-[10px] font-bold text-purple-300 drop-shadow-md">
-                                    <Sparkles className="w-3 h-3" />
-                                    STRATEJİ PLATFORMU GÜNCELLENDİ
+                                <div className="mt-4 pt-4 border-t border-slate-700/50 flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-[10px] font-bold text-purple-300 drop-shadow-md">
+                                        <Sparkles className="w-3 h-3" />
+                                        STRATEJİ PLATFORMU GÜNCELLENDİ
+                                    </div>
+                                    <div className="flex -space-x-1">
+                                        {Object.keys(ROLE_COLORS).map((role, i) => (
+                                            <div key={i} className={`w-3 h-3 rounded-full border border-slate-900 ${ROLE_COLORS[role].split(' ')[1]}`} />
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
