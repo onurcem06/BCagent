@@ -118,24 +118,28 @@ export default function DiscoveryChat() {
         const primaryColor = identity.color_palette.primary;
         const rationale = identity.color_palette.rationale;
 
-        // Skip if purpose is just a placeholder or rationale (derivation) hasn't happened yet
-        if (!purpose || purpose.length < 20 || !rationale || rationale.includes("psychology")) return;
+        // Skip if purpose is just a placeholder or rationale (derivation) hasn't happened properly
+        const isPlaceholderRationale = !rationale || rationale.includes("Stratejik neden") || rationale.includes("Analiz");
+        if (!purpose || purpose.length < 15 || isPlaceholderRationale) return;
 
-        const currentDataString = `${purpose}-${name}-${primaryColor}`;
+        const currentDataString = `${purpose}-${name}-${primaryColor}-${identity.web_ui_logic.layout_style}`;
 
         // Only trigger if data has significantly changed and we're not already generating
         if (currentDataString !== lastTriggeredData && !isGeneratingVisuals) {
             const autoGenerate = async () => {
+                console.log("Auto-generating visuals...");
                 setIsGeneratingVisuals(true);
                 setLastTriggeredData(currentDataString);
 
                 try {
+                    const sectorPrompt = identity.web_ui_logic.layout_style || 'Professional';
                     const prompts = {
-                        hero: `High-end 8k rendering, cinematic lighting, modern architecture for ${purpose}. Palette: ${primaryColor}. Atmosphere: Premium, professional.`,
-                        social: `Luxury editorial style social media post, magazine aesthetic, professional lighting for ${name || 'Brand'}. Theme: ${purpose}.`,
-                        logo: `Premium vector logo symbol, symmetrical, balanced, minimalist for ${name || 'the brand'}. Symbolizes ${identity.brand_dna.values?.[0] || 'quality'}. 8k resolution.`
+                        hero: `High-end 8k rendering, cinematic lighting, ${sectorPrompt} architecture for ${purpose}. Palette: ${primaryColor}. Atmosphere: Premium.`,
+                        social: `Luxury editorial style social media post, magazine aesthetic for ${name || 'Brand'}. Theme: ${purpose}.`,
+                        logo: `Premium vector logo symbol, symmetrical, balanced for ${name || 'the brand'}. Symbolizes ${identity.brand_dna.values?.[0] || 'quality'}. 8k resolution.`
                     };
 
+                    console.log("Sending image generation request with prompts:", prompts);
                     const response = await fetch('/api/generate-image', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },

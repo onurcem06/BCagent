@@ -6,15 +6,16 @@ export async function POST(req: Request) {
     try {
         const { prompts } = await req.json();
 
-        // Optimized prompts for high quality outputs - Expert Version
-        const heroPrompt = encodeURIComponent(`Professional high-end luxury website landing page, cinematic 4d, octane render, 8k, ray-traced, hyper-realistic, ${prompts.hero}`);
-        const socialPrompt = encodeURIComponent(`High-fashion editorial social media post, magazine aesthetic, ultra-sharp focus, professional lighting, ${prompts.social}`);
-        const logoPrompt = encodeURIComponent(`Premium vector logo, symmetrical, high-contrast, professional branding symbol on white, flat vector, ${prompts.logo}`);
+        // Use the prompts as provided, adding minimal quality boosters to avoid URL length issues
+        const heroPrompt = encodeURIComponent(`${prompts.hero}, professional photography, 8k, highly detailed`);
+        const socialPrompt = encodeURIComponent(`${prompts.social}, editorial style, high resolution`);
+        const logoPrompt = encodeURIComponent(`${prompts.logo}, flat vector, clean branding, white background`);
 
-        // Using Pollinations.ai for high-speed, high-quality, free generation
-        const hero_url = `https://pollinations.ai/p/${heroPrompt}?width=1280&height=720&seed=${Math.floor(Math.random() * 10000)}&model=flux-pro`;
-        const social_url = `https://pollinations.ai/p/${socialPrompt}?width=1080&height=1080&seed=${Math.floor(Math.random() * 10000)}&model=flux-pro`;
-        const logo_url = `https://pollinations.ai/p/${logoPrompt}?width=512&height=512&seed=${Math.floor(Math.random() * 10000)}&model=flux-pro`;
+        // Using Pollinations.ai for high-speed generation
+        const seed = Math.floor(Math.random() * 1000000);
+        const hero_url = `https://pollinations.ai/p/${heroPrompt}?width=1280&height=720&seed=${seed}&model=flux`;
+        const social_url = `https://pollinations.ai/p/${socialPrompt}?width=1080&height=1080&seed=${seed}&model=flux`;
+        const logo_url = `https://pollinations.ai/p/${logoPrompt}?width=512&height=512&seed=${seed}&model=flux`;
 
         return NextResponse.json({
             hero_url,
