@@ -195,6 +195,13 @@ export default function DiscoveryChat() {
     const handleCsvSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Check file size (Vercel payload limit is 4.5MB, base64 adds 33% overhead)
+            const MAX_SIZE = 3 * 1024 * 1024; // 3MB limit for safety
+            if (file.size > MAX_SIZE) {
+                setMessages(prev => [...prev, { role: 'ai', content: `[DİREKTÖR]: Dosya boyutu çok büyük (${(file.size / (1024 * 1024)).toFixed(2)} MB). Lütfen 3MB'dan küçük bir PDF veya metin dosyası yükleyin.` }]);
+                return;
+            }
+
             const isPdf = file.type === 'application/pdf';
             const reader = new FileReader();
 
@@ -210,12 +217,7 @@ export default function DiscoveryChat() {
                     dataPrompt = `DATA_IMPORT_ACTION: Yüklenen PDF dosyasını analiz et. Marka stratejisi için gerekli tüm verileri çıkar ve Board'u (JSON) doldur.`;
                 } else {
                     const text = result as string;
-                    dataPrompt = `DATA_IMPORT_ACTION: Aşağıdaki verileri analiz et. 
-1. Marka adını tespit et ve stratejiye işle.
-2. Marka Kimliği (8 Kutu) yapısındaki tüm alanları bu verilere dayanarak anında doldur.
-3. Eksik kalan kısımları analiz sonunda listeleyerek benden talep et.
-
-VERİ SETİ: \n${text.substring(0, 5000)}`;
+                    dataPrompt = `DATA_IMPORT_ACTION: Aşağıdaki verileri analiz et. Marka adını tespit et ve stratejiye işle. Marka Kimliği (8 Kutu) yapısındaki tüm alanları doldur. \n\nVERİ SETİ: \n${text.substring(0, 10000)}`;
                 }
 
                 setMessages(prev => [...prev, { role: 'user', content: `📂 [${isPdf ? 'PDF' : 'Veri'} Dosyası Yüklendi] Analiz başlatılıyor...` }]);
@@ -226,24 +228,32 @@ VERİ SETİ: \n${text.substring(0, 5000)}`;
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            messages: messages,
+                            messages: messages.slice(-5), // Send only last few messages to reduce payload size
                             newMessage: {
                                 role: 'user',
                                 content: dataPrompt,
-                                image: attachment // Send as 'image' but API will handle PDF mime
+                                image: attachment
                             }
                         }),
                     });
 
-                    if (!response.ok) throw new Error('Data analysis failed');
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.error || 'Analiz başarısız oldu.');
+                    }
 
                     const data = await response.json();
-                    extractJson(data.content);
-                    setMessages(prev => [...prev, { role: 'ai', content: data.content }]);
+                    const success = extractJson(data.content);
 
-                } catch (error) {
-                    console.error("CSV/PDF Analysis error", error);
-                    setMessages(prev => [...prev, { role: 'ai', content: "Veri analizi sırasında bir hata oluştu." }]);
+                    if (success) {
+                        setMessages(prev => [...prev, { role: 'ai', content: data.content }]);
+                    } else {
+                        setMessages(prev => [...prev, { role: 'ai', content: "[DİREKTÖR]: Verileri analiz ettim ancak strateji tahtasına aktarırken bir sorun oluştu. İşte analiz özetim: \n\n" + data.content }]);
+                    }
+
+                } catch (error: any) {
+                    console.error("Analysis error:", error);
+                    setMessages(prev => [...prev, { role: 'ai', content: `[DİREKTÖR]: Analiz sırasında teknik bir hata oluştu: ${error.message}. Lütfen dosyanın bozuk olmadığından emin olun.` }]);
                 } finally {
                     setIsLoading(false);
                 }
