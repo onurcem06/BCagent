@@ -65,6 +65,7 @@ export type BrandIdentity = {
     style_notes?: string;
   };
   status?: 'draft' | 'confirmed';
+  deleted?: boolean;
 };
 
 export const INITIAL_BRAND_IDENTITY: BrandIdentity = {
