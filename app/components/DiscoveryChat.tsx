@@ -338,5 +338,7 @@ export default function DiscoveryChat() {
                         </button>
                     </div>
                 </div>
-                );
+            </div>
+        </div>
+    );
 }
