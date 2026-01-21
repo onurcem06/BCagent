@@ -8,10 +8,15 @@ import { v4 as uuidv4 } from 'uuid';
 import BrandLibrary from './BrandLibrary';
 import { motion, AnimatePresence } from 'framer-motion';
 
-'[LOGO]': 'border-amber-500/50 bg-amber-500/10 text-amber-200',
+const ROLE_COLORS: Record<string, string> = {
+    '[DİREKTÖR]': 'border-purple-500/50 bg-purple-500/10 text-purple-200',
+    '[TASARIMCI]': 'border-blue-500/50 bg-blue-500/10 text-blue-200',
+    '[PAZARLAMACI]': 'border-green-500/50 bg-green-500/10 text-green-200',
+    '[METİN]': 'border-pink-500/50 bg-pink-500/10 text-pink-200',
+    '[LOGO]': 'border-amber-500/50 bg-amber-500/10 text-amber-200',
     '[UI/UX]': 'border-cyan-500/50 bg-cyan-500/10 text-cyan-200',
-        '[SEO]': 'border-indigo-500/50 bg-indigo-500/10 text-indigo-200',
-            '[SOSYAL]': 'border-red-500/50 bg-red-500/10 text-red-200',
+    '[SEO]': 'border-indigo-500/50 bg-indigo-500/10 text-indigo-200',
+    '[SOSYAL]': 'border-red-500/50 bg-red-500/10 text-red-200',
 };
 
 const AGENCY_STAFF = [
@@ -436,5 +441,6 @@ export default function DiscoveryChat() {
                     </div>
                 </div>
             </div>
-            );
+        </div>
+    );
 }
