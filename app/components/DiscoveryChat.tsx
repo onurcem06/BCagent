@@ -407,7 +407,12 @@ export default function DiscoveryChat() {
             <div className="w-72 bg-slate-900/60 border-l border-slate-800/60 flex flex-col overflow-hidden hidden xl:flex">
                 <div className="p-4 border-b border-slate-800/50 bg-slate-900/40">
                     <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-1">AGENCY TEAM</h3>
-                    <p className="text-[10px] text-slate-400 leading-tight">Uzman kadromuz markanız için senkronize çalışıyor.</p>
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`} />
+                        <span className="text-[11px] font-bold text-slate-300 uppercase">
+                            {isLoading ? 'AJANS TOPLANTIDA' : 'EKİP HAZIR'}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
