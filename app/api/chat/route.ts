@@ -45,6 +45,20 @@ Her etkileşiminin sonunda aşağıdaki JSON yapısını güncelleyerek bir kod 
 - JSON bloğunun geçerli ve eksiksiz olduğundan emin ol.
 `;
 
+// Helper function for exponential backoff retry
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
+    try {
+        return await fn();
+    } catch (error: any) {
+        if (retries > 0 && (error.message?.includes('429') || error.status === 429 || error.message?.includes('quota'))) {
+            console.warn(`Quota hit, retrying in ${delay}ms... (${retries} attempts left)`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return withRetry(fn, retries - 1, delay * 2);
+        }
+        throw error;
+    }
+}
+
 export async function POST(req: Request) {
     try {
         const { messages, newMessage } = await req.json();
@@ -52,114 +66,70 @@ export async function POST(req: Request) {
 
         if (!apiKey) {
             return NextResponse.json(
-                { error: 'GEMINI_API_KEY is not defined in environment variables.' },
+                { error: 'System Configuration Error: API Key missing.' },
                 { status: 500 }
             );
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-
-        // Fetch historical context
         const historyContext = await getHistorySummaryForAI();
         const fullSystemPrompt = SYSTEM_PROMPT + (historyContext ? `\n\n### GEÇMİŞ ETKİLEŞİMLERDEN ÖZET:\n${historyContext}` : "");
 
-        // User is on Paid Tier: Switching to standard gemini-2.0-flash for best balance of Quality/Speed
-        // Enabling Google Search Tool
         const model = genAI.getGenerativeModel({
             model: "gemini-2.0-flash",
-            systemInstruction: fullSystemPrompt, // Use the fullSystemPrompt here
+            systemInstruction: fullSystemPrompt,
             tools: [{ googleSearch: {} }] as any[]
         });
 
-        // Robust History Logic
         let history: any[] = [];
-        try {
-            // Filter and sanitize history
-            // We only use the 'messages' array which represents *past* history.
-            // The currently sent message will be handled separately via generateContent or sendMessage
-            if (messages && Array.isArray(messages)) {
-                history = messages.map((m: any) => ({
-                    role: m.role === 'user' ? 'user' : 'model',
-                    parts: [{ text: m.content }],
-                }));
-
-                // Remove leading 'model' messages to ensure User first
-                while (history.length > 0 && history[0].role === 'model') {
-                    history.shift();
-                }
+        if (messages && Array.isArray(messages)) {
+            history = messages.map((m: any) => ({
+                role: m.role === 'user' ? 'user' : 'model',
+                parts: [{ text: m.content }],
+            }));
+            while (history.length > 0 && history[0].role === 'model') {
+                history.shift();
             }
-        } catch (e) {
-            console.error("History parsing error", e);
-            history = [];
         }
 
         let text = "";
         const userPrompt = newMessage.content;
-        const userImage = newMessage.image; // Base64 string
+        const userImage = newMessage.image;
 
-        try {
+        await withRetry(async () => {
             if (userImage) {
-                // If there is an image, we use generateContent (Multimodal)
-                // History technically should be included in the prompt context if we use generateContent.
-                // However, attaching full history allows the model to know previous context.
-                // But mixing history + image in `startChat` is also possible but complex with image format.
-                // Easiest robust way for a "Vision" turn: Send History (as text blocks) + Image + New Prompt.
-
-                const promptParts: any[] = [];
-
-                // Add history as context to prompt (since we might treat this as a one-off multimodal turn)
-                // Or try to use startChat if the SDK supports inline images in history.
-                // gemini-2.0-flash DOES support images in chat. 
-                // Let's try to convert base64 to the correct Part format.
-
                 const imagePart = {
                     inlineData: {
-                        data: userImage.split(',')[1], // remove data:image/jpeg;base64, header
+                        data: userImage.split(',')[1],
                         mimeType: userImage.split(';')[0].split(':')[1]
                     }
                 };
-
                 const chat = model.startChat({ history: history });
                 const result = await chat.sendMessage([userPrompt, imagePart]);
                 const response = await result.response;
                 text = response.text();
-
             } else {
-                // Text-only standard flow
                 const chat = model.startChat({ history: history });
                 const result = await chat.sendMessage(userPrompt);
                 const response = await result.response;
                 text = response.text();
             }
-        } catch (chatError: any) {
-            console.error("Chat API Failed, attempting fallback:", chatError.message);
-            // Fallback: Stateless generation containing prompt only
-            const result = await model.generateContent(userPrompt);
-            const response = await result.response;
-            text = response.text();
-        }
-
-        // Basic validation: Check if text contains a JSON block
-        if (!text.includes('```json')) {
-            console.warn("AI response missing JSON block. Attempting to repair...");
-            // We could potentially do a second pass here, but for now we'll just log it.
-        }
+        });
 
         return NextResponse.json({ content: text });
 
     } catch (error: any) {
-        console.error('SERVER SIDE API ERROR:', JSON.stringify(error, null, 2));
+        console.error('SERVER SIDE API ERROR:', error);
 
-        // Handle Quota/Rate Limit Errors
         if (error.message?.includes('429') || error.status === 429 || error.message?.includes('quota')) {
             return NextResponse.json(
-                { error: 'Google API hız sınırı (quota) aşıldı. Lütfen kısa bir süre bekleyip tekrar deneyin.' },
+                { error: 'Sistem şu an çok yoğun. Lütfen birkaç saniye sonra tekrar deneyin. (Profesyonel kota koruması aktif)' },
                 { status: 429 }
             );
         }
 
         return NextResponse.json(
-            { error: error.message || 'An error occurred during the chat.' },
+            { error: 'Bir bağlantı hatası oluştu. Lütfen tekrar deneyin.' },
             { status: 500 }
         );
     }
