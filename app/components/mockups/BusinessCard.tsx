@@ -6,9 +6,10 @@ interface BusinessCardProps {
     font: string;
     logoText: string;
     tagline: string;
+    logoUrl?: string;
 }
 
-export const BusinessCard: React.FC<BusinessCardProps> = ({ primaryColor, accentColor, font, logoText, tagline }) => {
+export const BusinessCard: React.FC<BusinessCardProps> = ({ primaryColor, accentColor, font, logoText, tagline, logoUrl }) => {
     return (
         <div className="relative group perspective-1000">
             <div className="relative w-[280px] h-[160px] bg-white rounded-xl shadow-xl overflow-hidden transform transition-transform duration-500 group-hover:rotate-x-12 group-hover:rotate-y-12">
@@ -23,7 +24,11 @@ export const BusinessCard: React.FC<BusinessCardProps> = ({ primaryColor, accent
                 {/* Content */}
                 <div className="absolute inset-0 p-6 flex flex-col justify-between">
                     <div>
-                        <div className="w-8 h-8 rounded-full mb-3" style={{ backgroundColor: primaryColor }}></div>
+                        {logoUrl ? (
+                            <img src={logoUrl} className="w-8 h-8 object-contain mb-3" alt="Logo" />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full mb-3" style={{ backgroundColor: primaryColor }}></div>
+                        )}
                         <h3 className="text-xl font-bold text-gray-800" style={{ fontFamily: font, color: primaryColor }}>
                             {logoText || "Brand Name"}
                         </h3>

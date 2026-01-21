@@ -90,7 +90,10 @@ export default function DiscoveryChat() {
         }
     }, [currentBrandId, setCurrentBrandId]);
 
-    // Debounced Auto-save to Firestore
+    const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
+    const [lastTriggeredData, setLastTriggeredData] = useState<string>('');
+
+    // Auto-save to Firestore (Debounced)
     useEffect(() => {
         if (!currentBrandId) return;
 
@@ -107,6 +110,57 @@ export default function DiscoveryChat() {
 
         return () => clearTimeout(timer);
     }, [identity, currentBrandId]);
+
+    // Auto-trigger Visual Assets Generation
+    useEffect(() => {
+        const purpose = identity.brand_dna.purpose;
+        const name = identity.slogan_tone.tagline?.split(',')[0] || '';
+        const primaryColor = identity.color_palette.primary;
+        const rationale = identity.color_palette.rationale;
+
+        // Skip if purpose is just a placeholder or rationale (derivation) hasn't happened yet
+        if (!purpose || purpose.length < 20 || !rationale || rationale.includes("psychology")) return;
+
+        const currentDataString = `${purpose}-${name}-${primaryColor}`;
+
+        // Only trigger if data has significantly changed and we're not already generating
+        if (currentDataString !== lastTriggeredData && !isGeneratingVisuals) {
+            const autoGenerate = async () => {
+                setIsGeneratingVisuals(true);
+                setLastTriggeredData(currentDataString);
+
+                try {
+                    const prompts = {
+                        hero: `High-end 8k rendering, cinematic lighting, modern architecture for ${purpose}. Palette: ${primaryColor}. Atmosphere: Premium, professional.`,
+                        social: `Luxury editorial style social media post, magazine aesthetic, professional lighting for ${name || 'Brand'}. Theme: ${purpose}.`,
+                        logo: `Premium vector logo symbol, symmetrical, balanced, minimalist for ${name || 'the brand'}. Symbolizes ${identity.brand_dna.values?.[0] || 'quality'}. 8k resolution.`
+                    };
+
+                    const response = await fetch('/api/generate-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ identity, prompts })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        updatePartialIdentity({
+                            visuals: {
+                                hero_url: data.hero_url,
+                                social_url: data.social_url,
+                                logo_url: data.logo_url
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error("Auto Visual Gen Error:", error);
+                } finally {
+                    setIsGeneratingVisuals(false);
+                }
+            };
+            autoGenerate();
+        }
+    }, [identity, lastTriggeredData, isGeneratingVisuals, updatePartialIdentity]);
 
     // Reset messages when switching brands to avoid context confusion
     const isInitialMount = useRef(true);
@@ -137,45 +191,65 @@ export default function DiscoveryChat() {
     const handleCsvSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            const isPdf = file.type === 'application/pdf';
             const reader = new FileReader();
+
             reader.onload = async (event) => {
-                const text = event.target?.result;
-                if (typeof text === 'string') {
-                    const dataPrompt = `DATA_IMPORT_ACTION: Aşağıdaki verileri analiz et. 
+                const result = event.target?.result;
+                if (!result) return;
+
+                let dataPrompt = "";
+                let attachment: string | null = null;
+
+                if (isPdf) {
+                    attachment = result as string;
+                    dataPrompt = `DATA_IMPORT_ACTION: Yüklenen PDF dosyasını analiz et. Marka stratejisi için gerekli tüm verileri çıkar ve Board'u (JSON) doldur.`;
+                } else {
+                    const text = result as string;
+                    dataPrompt = `DATA_IMPORT_ACTION: Aşağıdaki verileri analiz et. 
 1. Marka adını tespit et ve stratejiye işle.
 2. Marka Kimliği (8 Kutu) yapısındaki tüm alanları bu verilere dayanarak anında doldur.
 3. Eksik kalan kısımları analiz sonunda listeleyerek benden talep et.
 
 VERİ SETİ: \n${text.substring(0, 5000)}`;
+                }
 
-                    setMessages(prev => [...prev, { role: 'user', content: "📂 [Veri Dosyası Yüklendi] Analiz et ve marka stratejisini başlat." }]);
-                    setIsLoading(true);
+                setMessages(prev => [...prev, { role: 'user', content: `📂 [${isPdf ? 'PDF' : 'Veri'} Dosyası Yüklendi] Analiz başlatılıyor...` }]);
+                setIsLoading(true);
 
-                    try {
-                        const response = await fetch('/api/chat', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                messages: messages,
-                                newMessage: { role: 'user', content: dataPrompt }
-                            }),
-                        });
+                try {
+                    const response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            messages: messages,
+                            newMessage: {
+                                role: 'user',
+                                content: dataPrompt,
+                                image: attachment // Send as 'image' but API will handle PDF mime
+                            }
+                        }),
+                    });
 
-                        if (!response.ok) throw new Error('Data analysis failed');
+                    if (!response.ok) throw new Error('Data analysis failed');
 
-                        const data = await response.json();
-                        extractJson(data.content);
-                        setMessages(prev => [...prev, { role: 'ai', content: data.content }]);
+                    const data = await response.json();
+                    extractJson(data.content);
+                    setMessages(prev => [...prev, { role: 'ai', content: data.content }]);
 
-                    } catch (error) {
-                        console.error("CSV Analysis error", error);
-                        setMessages(prev => [...prev, { role: 'ai', content: "Veri analizi sırasında bir hata oluştu." }]);
-                    } finally {
-                        setIsLoading(false);
-                    }
+                } catch (error) {
+                    console.error("CSV/PDF Analysis error", error);
+                    setMessages(prev => [...prev, { role: 'ai', content: "Veri analizi sırasında bir hata oluştu." }]);
+                } finally {
+                    setIsLoading(false);
                 }
             };
-            reader.readAsText(file);
+
+            if (isPdf) {
+                reader.readAsDataURL(file);
+            } else {
+                reader.readAsText(file);
+            }
         }
     };
 
@@ -369,9 +443,12 @@ VERİ SETİ: \n${text.substring(0, 5000)}`;
                                 <div className="flex items-center gap-4">
                                     <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
                                     <div className="flex flex-col gap-1.5">
-                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Analiz Ediliyor</span>
-                                        <div className="h-1 w-32 bg-slate-700/50 rounded-full overflow-hidden">
-                                            <div className="h-full bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse"></div>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Ajans Araştırıyor & Üretiyor</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-1 w-24 bg-slate-700/50 rounded-full overflow-hidden">
+                                                <div className="h-full bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500 animate-pulse w-full"></div>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-purple-400 animate-pulse">STRATEJİK ANALİZ</span>
                                         </div>
                                     </div>
                                 </div>
@@ -427,13 +504,35 @@ VERİ SETİ: \n${text.substring(0, 5000)}`;
             <div className="w-72 bg-slate-900/60 border-l border-slate-800/60 flex flex-col overflow-hidden hidden xl:flex">
                 <div className="p-4 border-b border-slate-800/50 bg-slate-900/40">
                     <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-1">AGENCY TEAM</h3>
-                    <div className="flex items-center gap-2 mt-2">
-                        <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`} />
-                        <span className="text-[11px] font-bold text-slate-300 uppercase">
-                            {isLoading ? 'AJANS TOPLANTIDA' : 'EKİP HAZIR'}
-                        </span>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 mt-1">
+                            <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`} />
+                            <span className="text-[11px] font-bold text-slate-300 uppercase">
+                                {isLoading ? 'AJANS TOPLANTIDA' : 'EKİP HAZIR'}
+                            </span>
+                        </div>
+                        {isSaving && <div className="text-[9px] text-slate-500 font-bold flex items-center gap-1"><Loader2 className="w-2 h-2 animate-spin" /> SAVING</div>}
                     </div>
                 </div>
+
+                <AnimatePresence>
+                    {isGeneratingVisuals && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="bg-purple-600/10 border-b border-purple-500/20 px-4 py-3"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Sparkles className="w-5 h-5 text-purple-400 animate-pulse" />
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-purple-200 uppercase tracking-widest">Visions Factory</span>
+                                    <span className="text-[9px] text-purple-400 animate-pulse font-bold">UZMAN GÖRSELLER ÜRETİLİYOR</span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
                     {AGENCY_STAFF.map((staff) => {

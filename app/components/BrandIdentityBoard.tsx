@@ -568,6 +568,7 @@ export default function BrandIdentityBoard() {
                             font={identity.typography.heading_font}
                             logoText={identity.slogan_tone.tagline?.split(',')[0]}
                             tagline={identity.brand_dna.values?.[0] || 'Tagline'}
+                            logoUrl={identity.visuals?.logo_url}
                         />
                     </div>
                 )
