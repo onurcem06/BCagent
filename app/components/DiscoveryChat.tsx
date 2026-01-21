@@ -92,7 +92,7 @@ export default function DiscoveryChat() {
 
     // Debounced Auto-save to Firestore
     useEffect(() => {
-        if (!currentBrandId || !identity.brand_dna.purpose) return;
+        if (!currentBrandId) return;
 
         const timer = setTimeout(async () => {
             setIsSaving(true);

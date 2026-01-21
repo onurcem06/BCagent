@@ -76,6 +76,15 @@ export default function BrandLibrary({ onClose }: { onClose?: () => void }) {
                         <History className="w-5 h-5 text-purple-400" />
                         <h2 className="text-lg font-bold text-white tracking-tight text-left">Marka Kütüphanesi</h2>
                     </div>
+                    {onClose && (
+                        <button
+                            onClick={onClose}
+                            className="p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-all"
+                            title="Kapat"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
 
                 <div className="space-y-3">
@@ -121,8 +130,8 @@ export default function BrandLibrary({ onClose }: { onClose?: () => void }) {
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 className={`group relative p-4 rounded-xl border transition-all cursor-pointer ${currentBrandId === brand.id
-                                        ? 'bg-purple-600/10 border-purple-500/50 shadow-lg shadow-purple-900/10'
-                                        : 'bg-slate-800/30 border-slate-800/50 hover:bg-slate-800/50 hover:border-slate-700'
+                                    ? 'bg-purple-600/10 border-purple-500/50 shadow-lg shadow-purple-900/10'
+                                    : 'bg-slate-800/30 border-slate-800/50 hover:bg-slate-800/50 hover:border-slate-700'
                                     }`}
                                 onClick={() => handleSelectBrand(brand.id)}
                             >
