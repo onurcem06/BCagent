@@ -90,3 +90,17 @@ export const getHistorySummaryForAI = async () => {
         return "";
     }
 };
+export const deleteBrand = async (id: string) => {
+    if (!db) return false;
+    try {
+        const brandRef = doc(db, 'brands', id);
+        // Using a soft delete or hard delete. Let's do hard delete for now as per user request.
+        await setDoc(brandRef, { deleted: true, updatedAt: serverTimestamp() }, { merge: true });
+        // Or actually delete: await deleteDoc(brandRef); 
+        // A soft delete is safer. Let's use soft delete.
+        return true;
+    } catch (error) {
+        console.error("Error deleting brand:", error);
+        return false;
+    }
+};
