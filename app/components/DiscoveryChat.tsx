@@ -401,45 +401,46 @@ export default function DiscoveryChat() {
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Right Sidebar - Agency Staff */}
-                <div className="w-72 bg-slate-900/60 border-l border-slate-800/60 flex flex-col overflow-hidden hidden xl:flex">
-                    <div className="p-4 border-b border-slate-800/50 bg-slate-900/40">
-                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-1">AGENCY TEAM</h3>
-                        <p className="text-[10px] text-slate-400 leading-tight">Uzman kadromuz markanız için senkronize çalışıyor.</p>
-                    </div>
+            {/* Right Sidebar - Agency Staff */}
+            <div className="w-72 bg-slate-900/60 border-l border-slate-800/60 flex flex-col overflow-hidden hidden xl:flex">
+                <div className="p-4 border-b border-slate-800/50 bg-slate-900/40">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-1">AGENCY TEAM</h3>
+                    <p className="text-[10px] text-slate-400 leading-tight">Uzman kadromuz markanız için senkronize çalışıyor.</p>
+                </div>
 
-                    <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-                        {AGENCY_STAFF.map((staff) => (
-                            <button
-                                key={staff.id}
-                                onClick={() => {
-                                    setInput(`@${staff.id}: `);
-                                    textareaRef.current?.focus();
-                                }}
-                                className="w-full p-2.5 rounded-xl border border-slate-800/50 bg-slate-800/20 hover:bg-slate-800/40 hover:border-slate-700 transition-all text-left flex items-start gap-3 group relative overflow-hidden"
-                            >
-                                <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white shadow-lg ${staff.color}`}>
-                                    {staff.id[0]}
-                                </div>
-                                <div className="flex flex-col gap-0.5 min-w-0">
-                                    <span className="text-xs font-bold text-slate-200 truncate group-hover:text-purple-400 transition-colors">{staff.name}</span>
-                                    <span className="text-[10px] text-slate-500 truncate">{staff.role}</span>
-                                </div>
-                                {/* Online Indicator */}
-                                <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-                            </button>
-                        ))}
-                    </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                    {AGENCY_STAFF.map((staff) => (
+                        <button
+                            key={staff.id}
+                            onClick={() => {
+                                setInput(`@${staff.id}: `);
+                                textareaRef.current?.focus();
+                            }}
+                            className="w-full p-2.5 rounded-xl border border-slate-800/50 bg-slate-800/20 hover:bg-slate-800/40 hover:border-slate-700 transition-all text-left flex items-start gap-3 group relative overflow-hidden"
+                        >
+                            <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white shadow-lg ${staff.color}`}>
+                                {staff.id[0]}
+                            </div>
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                                <span className="text-xs font-bold text-slate-200 truncate group-hover:text-purple-400 transition-colors">{staff.name}</span>
+                                <span className="text-[10px] text-slate-500 truncate">{staff.role}</span>
+                            </div>
+                            {/* Online Indicator */}
+                            <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                        </button>
+                    ))}
+                </div>
 
-                    <div className="p-4 border-t border-slate-800/50 bg-slate-950/40">
-                        <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/20">
-                            <p className="text-[10px] text-purple-300 leading-relaxed italic">
-                                "Bir uzmana hitaben yazmak için ismine tıkla veya @kullan."
-                            </p>
-                        </div>
+                <div className="p-4 border-t border-slate-800/50 bg-slate-950/40">
+                    <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/20">
+                        <p className="text-[10px] text-purple-300 leading-relaxed italic">
+                            "Bir uzmana hitaben yazmak için ismine tıkla veya @kullan."
+                        </p>
                     </div>
                 </div>
             </div>
-            );
+        </div>
+    );
 }
