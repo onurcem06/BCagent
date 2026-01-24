@@ -48,6 +48,7 @@ const JSON_SCHEMA = `
 `;
 
 import { getCachedAgentResponse, setCachedAgentResponse } from '@/app/lib/cacheService';
+import { scrapeWebsite } from '@/app/lib/scrapeService';
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000, onRetry?: (attempt: number) => void): Promise<T> {
     try {
@@ -69,7 +70,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000, onR
     }
 }
 
-async function runAgent(apiKey: string, systemPrompt: string, userContent: string, imageName?: string, onRetry?: () => void) {
+async function runAgent(apiKey: string, systemPrompt: string, userContent: string, imageBuffer?: Buffer, onRetry?: () => void) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
         model: MODEL_NAME,
@@ -77,8 +78,17 @@ async function runAgent(apiKey: string, systemPrompt: string, userContent: strin
     });
 
     return await withRetry(async () => {
-        if (imageName) {
-            return (await model.generateContent(userContent)).response.text();
+        if (imageBuffer) {
+            // Multimodal Request
+            return (await model.generateContent([
+                userContent,
+                {
+                    inlineData: {
+                        data: imageBuffer.toString('base64'),
+                        mimeType: "image/jpeg" // Assuming JPEG/PNG for simplicity from scraper
+                    }
+                }
+            ])).response.text();
         }
         return (await model.generateContent(userContent)).response.text();
     }, 3, 1500, (attempt) => {
@@ -119,8 +129,43 @@ export async function POST(req: Request) {
                     sendEvent('AGENT_START', 'SOSYOLOG');
                     sendEvent('AGENT_START', 'PSİKOLOG');
 
+                    // URL Detection & Scraping
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    const foundUrls = lastUserMessage.match(urlRegex);
+
+                    let scrapedContext = "";
+                    let siteImageBuffer: Buffer | undefined = undefined;
+
+                    if (foundUrls && foundUrls.length > 0) {
+                        const targetUrl = foundUrls[0];
+                        sendEvent('AGENT_LOG', `[SİSTEM]: Web sitesi taranıyor: ${targetUrl}`);
+
+                        const scrapeResult = await scrapeWebsite(targetUrl);
+
+                        if (scrapeResult) {
+                            scrapedContext = `
+                            [WEB SİTESİ ANALİZİ - CANLI VERİ]:
+                            URL: ${scrapeResult.url}
+                            BAŞLIK: ${scrapeResult.title}
+                            AÇIKLAMA: ${scrapeResult.description}
+                            İÇERİK ÖZETİ: ${scrapeResult.text}
+                            `;
+
+                            if (scrapeResult.imageBuffer) {
+                                siteImageBuffer = scrapeResult.imageBuffer;
+                                sendEvent('AGENT_LOG', `[SİSTEM]: Site görseli ve içeriği başarıyla alındı.`);
+                            } else {
+                                sendEvent('AGENT_LOG', `[SİSTEM]: Site içeriği okundu (Görsel alınamadı).`);
+                            }
+                        } else {
+                            sendEvent('AGENT_LOG', `[SİSTEM]: Siteye erişilemedi, normal analiz yapılıyor.`);
+                        }
+                    }
+
                     // Check Cache (Firebase Persistent)
-                    const [cachedSocio, cachedPsycho] = await Promise.all([
+                    const bypassCache = !!scrapedContext;
+
+                    const [cachedSocio, cachedPsycho] = bypassCache ? [null, null] : await Promise.all([
                         getCachedAgentResponse(lastUserMessage, 'SOCIOLOGIST'),
                         getCachedAgentResponse(lastUserMessage, 'PSYCHOLOGIST')
                     ]);
@@ -136,11 +181,16 @@ export async function POST(req: Request) {
                         sendEvent('AGENT_LOG', '[SOSYOLOG]: Küresel trendler ve sektör verileri taranıyor...');
                         sendEvent('AGENT_LOG', '[PSİKOLOG]: Hedef kitle bilinçaltı haritası çıkarılıyor...');
 
+                        // Inject Web Context if available
+                        const analysisPrompt = scrapedContext
+                            ? `KULLANICI MESAJI: ${lastUserMessage}\n\n${scrapedContext}\n\nTALİMAT: Yukarıdaki WEB SİTESİ verilerini (ve varsa görseli) temel alarak analiz yap. Sektörü ve markayı bu verilere göre tanımla.`
+                            : `Analiz et: ${lastUserMessage}`;
+
                         const [socio, psycho] = await Promise.all([
-                            runAgent(apiKey, AGENT_PROMPTS.SOCIOLOGIST, `Analiz et: ${lastUserMessage}`, undefined,
+                            runAgent(apiKey, AGENT_PROMPTS.SOCIOLOGIST, analysisPrompt, siteImageBuffer,
                                 () => sendEvent('AGENT_LOG', '[SOSYOLOG]: Bağlantı gecikmesi. Tekrar deneniyor...')
                             ),
-                            runAgent(apiKey, AGENT_PROMPTS.PSYCHOLOGIST, `Analiz et: ${lastUserMessage}`, undefined,
+                            runAgent(apiKey, AGENT_PROMPTS.PSYCHOLOGIST, analysisPrompt, siteImageBuffer,
                                 () => sendEvent('AGENT_LOG', '[PSİKOLOG]: Bağlantı gecikmesi. Tekrar deneniyor...')
                             )
                         ]);
@@ -148,9 +198,11 @@ export async function POST(req: Request) {
                         socioReport = socio;
                         psychoReport = psycho;
 
-                        // Update Cache (Async - Fire and Forget)
-                        setCachedAgentResponse(lastUserMessage, 'SOCIOLOGIST', socio);
-                        setCachedAgentResponse(lastUserMessage, 'PSYCHOLOGIST', psycho);
+                        // Update Cache (Only if generic message, maybe don't cache deeply context-heavy scraped stuff? keeping simple for now)
+                        if (!scrapedContext) {
+                            setCachedAgentResponse(lastUserMessage, 'SOCIOLOGIST', socio);
+                            setCachedAgentResponse(lastUserMessage, 'PSYCHOLOGIST', psycho);
+                        }
                     }
 
                     sendEvent('AGENT_DONE', 'SOSYOLOG');
