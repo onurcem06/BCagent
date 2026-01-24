@@ -66,7 +66,7 @@ export function LandingPagePreview({ identity }: { identity: BrandIdentity }) {
                             <span className="text-white/60 hover:text-white pointer-cursor">Experience</span>
                             <span className="text-white/60 hover:text-white pointer-cursor">Vision</span>
                             <div className="w-10 h-10 -mx-4 bg-white rounded-full flex items-center justify-center p-2">
-                                {identity.visuals?.logo_url ? <img src={identity.visuals.logo_url} className="w-full h-full object-contain" /> : <div className="w-2 h-2 bg-black rounded-full" />}
+                                {identity.visuals?.logo_url ? <img src={identity.visuals.logo_url} className="w-full h-full object-contain" alt="Brand Logo" /> : <div className="w-2 h-2 bg-black rounded-full" />}
                             </div>
                             <span className="text-white/60 hover:text-white pointer-cursor">Utility</span>
                             <span className="text-white/60 hover:text-white pointer-cursor">Contact</span>
@@ -93,7 +93,7 @@ export function LandingPagePreview({ identity }: { identity: BrandIdentity }) {
             <div className="w-full bg-slate-50 text-slate-900 overflow-auto h-full scrollbar-hide" style={{ fontFamily: bodyFont }}>
                 <nav className="p-6 bg-white border-b border-slate-200 flex justify-between items-center sticky top-0 z-50">
                     <div className="flex items-center gap-3">
-                        {identity.visuals?.logo_url ? <img src={identity.visuals.logo_url} className="h-8 w-auto" /> : <div className="w-8 h-8 rounded" style={{ backgroundColor: primaryColor }} />}
+                        {identity.visuals?.logo_url ? <img src={identity.visuals.logo_url} className="h-8 w-auto" alt="Brand Logo" /> : <div className="w-8 h-8 rounded" style={{ backgroundColor: primaryColor }} />}
                         <span className="font-bold text-lg uppercase tracking-tight" style={{ fontFamily: headingFont }}>{identity.brand_name || identity.slogan_tone.tagline?.split(',')[0] || 'CORPORATION'}</span>
                     </div>
                     <div className="flex items-center gap-6">
@@ -128,7 +128,7 @@ export function LandingPagePreview({ identity }: { identity: BrandIdentity }) {
                             <div className="absolute -inset-4 bg-slate-200 rounded-[2rem] transform -rotate-1 group-hover:rotate-0 transition-transform duration-500" />
                             <div className="relative aspect-[4/5] bg-slate-300 rounded-[1.5rem] overflow-hidden shadow-2xl">
                                 {heroImage ? (
-                                    <img src={heroImage} className="w-full h-full object-cover" />
+                                    <img src={heroImage} className="w-full h-full object-cover" alt="Hero Section" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-white"><Star className="w-12 h-12 text-slate-200" /></div>
                                 )}

@@ -34,6 +34,12 @@ export type CompetitorAnalysis = {
   differentiation: string;
 };
 
+
+export type WebUILogic = {
+  layout_style: string;
+  border_radius: string;
+};
+
 export type BrandIdentity = {
   brand_name: string;
   brand_dna: BrandDNA;
@@ -41,6 +47,7 @@ export type BrandIdentity = {
   color_palette: ColorPalette;
   typography: Typography;
   slogan_tone: SloganTone;
+  web_ui_logic: WebUILogic;
   competitor_analysis: CompetitorAnalysis;
   visuals?: {
     hero_url?: string;
@@ -55,6 +62,7 @@ export type BrandIdentity = {
   deleted?: boolean;
 };
 
+
 export const INITIAL_BRAND_IDENTITY: BrandIdentity = {
   brand_name: "",
   brand_dna: { purpose: "", values: [], usp: "" },
@@ -62,6 +70,7 @@ export const INITIAL_BRAND_IDENTITY: BrandIdentity = {
   color_palette: { primary: "", secondary: "", accent: "", rationale: "" },
   typography: { heading_font: "", body_font: "", style_rationale: "" },
   slogan_tone: { tagline: "", tone_of_voice: "", keywords: [] },
+  web_ui_logic: { layout_style: "SaaS", border_radius: "12px" },
   competitor_analysis: { market_gap: "", differentiation: "" },
   visuals: {
     hero_url: "",
