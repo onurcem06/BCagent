@@ -344,7 +344,7 @@ export default function BrandIdentityBoard() {
                     </div>
                     <div className="flex items-center gap-2">
                         <button onClick={handleCanvaSync} disabled={isCanvaSyncing || !identity.brand_dna.purpose} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-all disabled:opacity-50">
-                            {isCanvaSyncing ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />} Canva Sync
+                            {isCanvaSyncing ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />} Canva Sync (Demo)
                         </button>
                         {identity.status === 'confirmed' ? (
                             <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-500 px-4 py-2 rounded-lg font-bold"><CheckCircle2 className="w-4 h-4" /> Confirmed</div>
