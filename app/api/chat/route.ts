@@ -115,7 +115,10 @@ ${strategistReport}
 
 --- TALİMAT ---
 Bu raporları kullanarak, markanın kimliğini oluştur. Çelişkili öneriler varsa Stratejist'in (Pazar odaklı) önerisine öncelik ver ama Sosyolog'un kültürel uyarılarını asla göz ardı etme.
-Nihai çıktıyı mutlaka aşağıdaki JSON formatında ve açıklama metniyle birlikte üret.
+
+ÖNEMLİ: Çıktıyı İKİ BÖLÜM halinde ver:
+1. "MASTER BRAND BLUEPRINT" Markdown Raporu (System Prompt'ta belirtilen şablona uygun).
+2. JSON Veri Bloğu (System Prompt'ta belirtilen şablona uygun).
 `;
 
         // 3. AŞAMA: DİREKTÖRÜN KARARI (Final Synthesis)
@@ -123,8 +126,8 @@ Nihai çıktıyı mutlaka aşağıdaki JSON formatında ve açıklama metniyle b
         const mainSystemPrompt = `
 ${AGENT_PROMPTS.DIRECTOR}
 
-### KESİN ÇIKTI FORMATI (JSON):
-Yanıtının sonunda (veya uygun yerinde) BU JSON ŞEMASINI KULLANARAK bir kod bloğu oluştur:
+### KESİN ÇIKTI FORMATI - BÖLÜM 2 (JSON):
+Raporun EN SONUNDA, arayüzün çalışması için aşağıdaki JSON şemasını doldurarak bir kod bloğu oluştur.
 \`\`\`json
 ${JSON_SCHEMA}
 \`\`\`

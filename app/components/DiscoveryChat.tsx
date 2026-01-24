@@ -11,23 +11,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 const ROLE_COLORS: Record<string, string> = {
     '[DİREKTÖR]': 'border-purple-500/50 bg-purple-500/10 text-purple-200',
     '[STRATEJİST]': 'border-blue-500/50 bg-blue-500/10 text-blue-200',
-    '[PAZARLAMACI]': 'border-green-500/50 bg-green-500/10 text-green-200',
-    '[METİN]': 'border-pink-500/50 bg-pink-500/10 text-pink-200',
     '[SOSYOLOG]': 'border-amber-500/50 bg-amber-500/10 text-amber-200',
     '[PSİKOLOG]': 'border-cyan-500/50 bg-cyan-500/10 text-cyan-200',
-    '[ELEŞTİRMEN]': 'border-red-500/50 bg-red-500/10 text-red-200',
-    '[TREND]': 'border-indigo-500/50 bg-indigo-500/10 text-indigo-200',
 };
 
 const AGENCY_STAFF = [
     { id: 'DİREKTÖR', name: 'Genel Müdür', role: 'Strategy & Orchestration', color: 'bg-purple-500' },
-    { id: 'PAZARLAMACI', name: 'Pazarlama Uzmanı', role: 'Growth & Audience', color: 'bg-green-500' },
-    { id: 'STRATEJİST', name: 'Görsel Stratejist', role: 'Design Theory & Systems', color: 'bg-blue-500' },
-    { id: 'SOSYOLOG', name: 'Toplum Mühendisi', role: 'Culture & Mass Behavior', color: 'bg-amber-500' },
-    { id: 'PSİKOLOG', name: 'Davranış Bilimci', role: 'Subconscious & Drives', color: 'bg-cyan-500' },
-    { id: 'ELEŞTİRMEN', name: 'Risk Analisti', role: 'Challenge & Validation', color: 'bg-red-500' },
-    { id: 'TREND', name: 'Trend Avcısı', role: 'Zeitgeist & Future', color: 'bg-indigo-500' },
-    { id: 'METİN', name: 'Hikaye Anlatıcısı', role: 'Narrative & Voice', color: 'bg-pink-500' },
+    { id: 'SOSYOLOG', name: 'Toplum Mühendisi', role: 'Cultural Analyst', color: 'bg-amber-500' },
+    { id: 'PSİKOLOG', name: 'Davranış Bilimci', role: 'Behavioral Scientist', color: 'bg-cyan-500' },
+    { id: 'STRATEJİST', name: 'Görsel Mimar', role: 'Visual Strategist', color: 'bg-blue-500' },
 ];
 
 const MessageContent = ({ content }: { content: string }) => {
