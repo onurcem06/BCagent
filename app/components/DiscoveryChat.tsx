@@ -27,6 +27,19 @@ const AGENCY_STAFF = [
     { id: 'CRITIC', name: 'Baş Denetçi', role: 'Red Team Lead', color: 'bg-red-600' },
 ];
 
+const AgentAvatar = ({ id, color, name, isThinking, onClick }: { id: string, color: string, name: string, isThinking?: boolean, onClick?: () => void }) => (
+    <div onClick={onClick} className={`relative flex flex-col items-center gap-1 group cursor-pointer p-1 rounded-lg transition-all ${isThinking ? 'bg-amber-500/10' : 'hover:bg-slate-800'}`}>
+        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-white shadow-lg transition-all ${color} ${isThinking ? 'border-amber-400 animate-pulse scale-110' : 'border-slate-900 group-hover:scale-105'}`}>
+            {id[0]}
+        </div>
+        {/* Status Dot */}
+        <div className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${isThinking ? 'bg-amber-500 animate-ping' : 'bg-green-500'}`} />
+        <span className="text-[9px] font-medium text-slate-400 group-hover:text-white max-w-[60px] truncate text-center hidden md:block">
+            {name.split(' ')[0]}
+        </span>
+    </div>
+);
+
 const MessageContent = ({ content }: { content: string }) => {
     const parts = content.split(/(\[[A-ZİÜÖĞÇ\s]+\]:)/g);
     if (parts.length <= 1) return <div className="whitespace-pre-wrap">{content}</div>;
@@ -305,38 +318,41 @@ export default function DiscoveryChat() {
         <div className="flex h-full bg-slate-950 overflow-hidden">
             {/* Left Main Chat Area */}
             <div className="flex-[2] flex flex-col bg-slate-900/40 backdrop-blur-2xl border-r border-slate-800/60 relative overflow-hidden min-w-0">
-                {/* Header */}
-                <div className="p-4 border-b border-slate-800/50 flex flex-col gap-1 bg-slate-900/20">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setShowLibrary(!showLibrary)}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-xs font-bold uppercase tracking-wider ${showLibrary ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
-                                title="Marka Kütüphanesi"
-                            >
-                                <Library className="w-4 h-4" />
-                                <span>Projelerim</span>
-                            </button>
-                            <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                                Branding Cockpit
-                            </h2>
-                        </div>
+                {/* New Compact Header */}
+                <div className="bg-slate-950/80 backdrop-blur-md border-b border-slate-800 p-4 z-20">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                            {isSaving && (
-                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 animate-pulse">
-                                    <Save className="w-3 h-3" />
-                                    SAVING
-                                </div>
-                            )}
-                            {!isSaving && identity.brand_dna.purpose && (
-                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-green-500/70">
-                                    <Save className="w-3 h-3" />
-                                    SYNCED
-                                </div>
-                            )}
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-900/20">
+                                <Sparkles className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-white leading-tight">Branding Cockpit</h2>
+                                <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">AI Design Studio</p>
+                            </div>
                         </div>
+                        <button
+                            onClick={() => setShowLibrary(!showLibrary)}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-700 hover:border-purple-500 hover:bg-slate-800 text-slate-300 rounded-full transition-all text-xs font-bold group"
+                        >
+                            <Library className="w-4 h-4 group-hover:text-purple-400 transition-colors" />
+                            <span>Projelerim</span>
+                        </button>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider pl-9">Strategic Design Assistant</p>
+
+                    {/* Horizontal Agents Bar */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none mask-linear-fade">
+                        {AGENCY_STAFF.map(staff => (
+                            <AgentAvatar
+                                key={staff.id}
+                                {...staff}
+                                isThinking={isLoading}
+                                onClick={() => {
+                                    setInput(`@${staff.id}: `);
+                                    textareaRef.current?.focus();
+                                }}
+                            />
+                        ))}
+                    </div>
                 </div>
 
                 {/* Brand Library Drawer Overlay */}
@@ -354,23 +370,23 @@ export default function DiscoveryChat() {
                     )}
                 </AnimatePresence>
 
-                {/* Actions Bar */}
-                <div className="px-4 py-2 border-b border-slate-800/30 flex items-center gap-2 bg-slate-900/10">
+                {/* Tool Bar */}
+                <div className="px-4 py-2 border-b border-slate-800/30 flex items-center gap-2 bg-slate-900/40 backdrop-blur-sm">
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageSelect} />
                     <input type="file" ref={csvInputRef} className="hidden" accept=".csv,.txt,.pdf" onChange={handleCsvSelect} />
                     <button
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-slate-500 transition-all text-xs text-slate-300 font-medium"
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-slate-500 hover:bg-slate-700 transition-all text-xs text-slate-300 font-medium"
                         onClick={() => csvInputRef.current?.click()}
                     >
                         <Upload className="w-3.5 h-3.5" />
-                        Belge/Veri Yükle
+                        <span className="truncate">Veri Yükle</span>
                     </button>
                     <button
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-medium ${selectedImage ? 'bg-purple-900/40 border-purple-500 text-purple-200' : 'bg-slate-800/50 border-slate-700 text-slate-300'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-medium ${selectedImage ? 'bg-purple-900/40 border-purple-500 text-purple-200' : 'bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-700 text-slate-300'}`}
                         onClick={() => fileInputRef.current?.click()}
                     >
                         <ImageIcon className="w-3.5 h-3.5" />
-                        İlham Görseli
+                        <span className="truncate">Görsel</span>
                     </button>
                 </div>
 
@@ -464,62 +480,7 @@ export default function DiscoveryChat() {
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Right Sidebar - Agency Staff */}
-            <div className="w-72 bg-slate-900/60 border-l border-slate-800/60 flex flex-col overflow-hidden hidden xl:flex">
-                <div className="p-4 border-b border-slate-800/50 bg-slate-900/40">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-1">AGENCY TEAM</h3>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 mt-1">
-                            <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`} />
-                            <span className="text-[11px] font-bold text-slate-300 uppercase">
-                                {isLoading ? 'AJANS TOPLANTIDA' : 'EKİP HAZIR'}
-                            </span>
-                        </div>
-                        {isSaving && <div className="text-[9px] text-slate-500 font-bold flex items-center gap-1"><Loader2 className="w-2 h-2 animate-spin" /> SAVING</div>}
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-                    {AGENCY_STAFF.map((staff) => {
-                        const isThinking = isLoading;
-                        return (
-                            <button
-                                key={staff.id}
-                                onClick={() => {
-                                    setInput(`@${staff.id}: `);
-                                    textareaRef.current?.focus();
-                                }}
-                                className={`w-full p-2.5 rounded-xl border transition-all text-left flex items-start gap-3 group relative overflow-hidden ${isThinking ? 'border-amber-500/30 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.05)]' : 'border-slate-800/50 bg-slate-800/20 hover:bg-slate-800/40 hover:border-slate-700'
-                                    }`}
-                            >
-                                <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white shadow-lg ${staff.color} ${isThinking && 'animate-bounce shadow-xl ring-2 ring-amber-500/30'}`}>
-                                    {staff.id[0]}
-                                </div>
-                                <div className="flex flex-col gap-0.5 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`text-xs font-bold truncate transition-colors ${isThinking ? 'text-amber-200' : 'text-slate-200 group-hover:text-purple-400'}`}>
-                                            {staff.name}
-                                        </span>
-                                        {isThinking && <Loader2 className="w-2 h-2 text-amber-500 animate-spin" />}
-                                    </div>
-                                    <span className="text-[10px] text-slate-500 truncate">{staff.role}</span>
-                                </div>
-                                {/* Online Indicator */}
-                                <div className={`absolute top-2 right-2 w-1.5 h-1.5 rounded-full ${isThinking ? 'bg-amber-500 animate-ping' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]'}`} />
-                            </button>
-                        );
-                    })}
-                </div>
-
-                <div className="p-4 border-t border-slate-800/50 bg-slate-950/40">
-                    <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/20">
-                        <p className="text-[10px] text-purple-300 leading-relaxed italic">
-                            "Bir uzmana hitaben yazmak için ismine tıkla veya @kullan."
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>

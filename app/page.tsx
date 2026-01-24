@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <main className="flex h-screen w-full bg-black text-white overflow-hidden">
       {/* Left Panel: Discovery Chat (35% width on large screens) */}
-      <section className="w-full md:w-[35%] lg:w-[30%] h-full border-r border-slate-800">
+      <section className="w-full md:w-[40%] lg:w-[35%] h-full border-r border-slate-800">
         <DiscoveryChat />
       </section>
 

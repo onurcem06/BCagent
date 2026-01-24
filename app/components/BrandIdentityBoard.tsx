@@ -431,7 +431,7 @@ export default function BrandIdentityBoard() {
 
                         return (
                             <motion.div key={card.key} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                                className={`relative p-5 rounded-xl border min-h-[160px] flex flex-col gap-3 group transition-all overflow-hidden ${hasContent ? 'bg-slate-900 border-purple-500/30' : 'bg-slate-900/20 border-slate-800 border-dashed opacity-50'}`}>
+                                className={`relative p-5 rounded-xl border min-h-[220px] max-h-[350px] flex flex-col gap-3 group transition-all ${hasContent ? 'bg-slate-900 border-purple-500/30 shadow-lg' : 'bg-slate-900/20 border-slate-800 border-dashed opacity-50'}`}>
                                 <div className="flex items-center justify-between text-slate-400">
                                     <div className="flex items-center gap-2">
                                         <card.icon className={`w-4 h-4 ${hasContent ? 'text-purple-400' : ''}`} />
@@ -453,9 +453,9 @@ export default function BrandIdentityBoard() {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-1 overflow-hidden">
+                                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent pr-2">
                                     {hasContent ? (
-                                        <div className="text-sm text-slate-200 leading-relaxed font-medium">{content}</div>
+                                        <div className="text-sm text-slate-200 leading-relaxed font-medium pb-2">{content}</div>
                                     ) : (
                                         <div className="h-full flex items-center justify-center text-slate-600 text-xs italic">Awaiting AI analysis...</div>
                                     )}
