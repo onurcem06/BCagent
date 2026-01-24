@@ -7,8 +7,9 @@ export const saveBrandIdentity = async (id: string, identity: BrandIdentity, nam
     try {
         const brandRef = doc(db, 'brands', id);
 
-        // Priority: Passed name > Tagline > Purpose (first line) > Default
+        // Priority: Passed name > identity.brand_name > Tagline > Purpose > Default
         const brandName = name
+            || identity.brand_name
             || identity.slogan_tone.tagline?.split(',')[0]
             || identity.brand_dna.purpose?.split('\n')[0]?.substring(0, 50)
             || 'Untitled Brand';

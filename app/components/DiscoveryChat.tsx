@@ -111,61 +111,6 @@ export default function DiscoveryChat() {
         return () => clearTimeout(timer);
     }, [identity, currentBrandId]);
 
-    // Auto-trigger Visual Assets Generation
-    useEffect(() => {
-        const purpose = identity.brand_dna.purpose;
-        const name = identity.slogan_tone.tagline?.split(',')[0] || '';
-        const primaryColor = identity.color_palette.primary;
-        const rationale = identity.color_palette.rationale;
-
-        // Skip if purpose is just a placeholder or rationale (derivation) hasn't happened properly
-        const isPlaceholderRationale = !rationale || rationale.includes("Stratejik neden") || rationale.includes("Analiz");
-        if (!purpose || purpose.length < 15 || isPlaceholderRationale) return;
-
-        const currentDataString = `${purpose}-${name}-${primaryColor}-${identity.web_ui_logic.layout_style}`;
-
-        // Only trigger if data has significantly changed and we're not already generating
-        if (currentDataString !== lastTriggeredData && !isGeneratingVisuals) {
-            const autoGenerate = async () => {
-                console.log("Auto-generating visuals...");
-                setIsGeneratingVisuals(true);
-                setLastTriggeredData(currentDataString);
-
-                try {
-                    const sectorPrompt = identity.web_ui_logic.layout_style || 'Professional';
-                    const prompts = {
-                        hero: `High-end 8k rendering, cinematic lighting, ${sectorPrompt} architecture for ${purpose}. Palette: ${primaryColor}. Atmosphere: Premium.`,
-                        social: `Luxury editorial style social media post, magazine aesthetic for ${name || 'Brand'}. Theme: ${purpose}.`,
-                        logo: `Premium vector logo symbol, symmetrical, balanced for ${name || 'the brand'}. Symbolizes ${identity.brand_dna.values?.[0] || 'quality'}. 8k resolution.`
-                    };
-
-                    console.log("Sending image generation request with prompts:", prompts);
-                    const response = await fetch('/api/generate-image', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ identity, prompts })
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        updatePartialIdentity({
-                            visuals: {
-                                hero_url: data.hero_url,
-                                social_url: data.social_url,
-                                logo_url: data.logo_url
-                            }
-                        });
-                    }
-                } catch (error) {
-                    console.error("Auto Visual Gen Error:", error);
-                } finally {
-                    setIsGeneratingVisuals(false);
-                }
-            };
-            autoGenerate();
-        }
-    }, [identity, lastTriggeredData, isGeneratingVisuals, updatePartialIdentity]);
-
     // Reset messages when switching brands to avoid context confusion
     const isInitialMount = useRef(true);
     useEffect(() => {
@@ -528,25 +473,6 @@ export default function DiscoveryChat() {
                         {isSaving && <div className="text-[9px] text-slate-500 font-bold flex items-center gap-1"><Loader2 className="w-2 h-2 animate-spin" /> SAVING</div>}
                     </div>
                 </div>
-
-                <AnimatePresence>
-                    {isGeneratingVisuals && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="bg-purple-600/10 border-b border-purple-500/20 px-4 py-3"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Sparkles className="w-5 h-5 text-purple-400 animate-pulse" />
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-purple-200 uppercase tracking-widest">Visions Factory</span>
-                                    <span className="text-[9px] text-purple-400 animate-pulse font-bold">UZMAN GÖRSELLER ÜRETİLİYOR</span>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
 
                 <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
                     {AGENCY_STAFF.map((staff) => {

@@ -19,7 +19,7 @@ export function LandingPagePreview({ identity }: { identity: BrandIdentity }) {
             <div className="w-full bg-white text-slate-900 overflow-auto h-full scrollbar-hide" style={{ fontFamily: bodyFont }}>
                 <nav className="p-8 flex justify-between items-center bg-white/50 backdrop-blur-sm sticky top-0 z-50">
                     <span className="text-xl font-black tracking-tighter" style={{ fontFamily: headingFont }}>
-                        {identity.visuals?.logo_url ? <img src={identity.visuals.logo_url} className="h-6 w-auto" alt="Logo" /> : (identity.slogan_tone.tagline?.split(',')[0] || 'BRAND')}
+                        {identity.visuals?.logo_url ? <img src={identity.visuals.logo_url} className="h-6 w-auto" alt="Logo" /> : (identity.brand_name || identity.slogan_tone.tagline?.split(',')[0] || 'BRAND')}
                     </span>
                     <div className="flex gap-8 text-[11px] font-bold uppercase tracking-widest text-slate-400">
                         <span className="hover:text-black cursor-pointer transition-colors">Selection</span>
@@ -94,7 +94,7 @@ export function LandingPagePreview({ identity }: { identity: BrandIdentity }) {
                 <nav className="p-6 bg-white border-b border-slate-200 flex justify-between items-center sticky top-0 z-50">
                     <div className="flex items-center gap-3">
                         {identity.visuals?.logo_url ? <img src={identity.visuals.logo_url} className="h-8 w-auto" /> : <div className="w-8 h-8 rounded" style={{ backgroundColor: primaryColor }} />}
-                        <span className="font-bold text-lg uppercase tracking-tight" style={{ fontFamily: headingFont }}>{identity.slogan_tone.tagline?.split(',')[0] || 'CORPORATION'}</span>
+                        <span className="font-bold text-lg uppercase tracking-tight" style={{ fontFamily: headingFont }}>{identity.brand_name || identity.slogan_tone.tagline?.split(',')[0] || 'CORPORATION'}</span>
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="hidden md:flex gap-8 text-xs font-bold uppercase text-slate-500">
@@ -149,7 +149,7 @@ export function LandingPagePreview({ identity }: { identity: BrandIdentity }) {
                     ) : (
                         <div className="w-8 h-8 rounded-full" style={{ backgroundColor: primaryColor }} />
                     )}
-                    <span className="font-bold text-lg" style={{ fontFamily: headingFont }}>{identity.slogan_tone.tagline?.split(',')[0] || 'Brand'}</span>
+                    <span className="font-bold text-lg" style={{ fontFamily: headingFont }}>{identity.brand_name || identity.slogan_tone.tagline?.split(',')[0] || 'Brand'}</span>
                 </div>
                 <div className="hidden md:flex items-center gap-8 text-sm font-medium">
                     <span className="hover:text-purple-600 transition-colors pointer-cursor">Features</span>

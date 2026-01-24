@@ -48,6 +48,7 @@ export type CompetitorAnalysis = {
 };
 
 export type BrandIdentity = {
+  brand_name: string;
   brand_dna: BrandDNA;
   target_audience: TargetAudience;
   color_palette: ColorPalette;
@@ -70,6 +71,7 @@ export type BrandIdentity = {
 };
 
 export const INITIAL_BRAND_IDENTITY: BrandIdentity = {
+  brand_name: "",
   brand_dna: { purpose: "", values: [], usp: "" },
   target_audience: { demographics: "", psychographics: "", archetype: "" },
   color_palette: { primary: "", secondary: "", accent: "", rationale: "" },

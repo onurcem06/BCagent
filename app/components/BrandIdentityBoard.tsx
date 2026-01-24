@@ -566,8 +566,8 @@ export default function BrandIdentityBoard() {
                             primaryColor={identity.color_palette.primary}
                             accentColor={identity.color_palette.accent}
                             font={identity.typography.heading_font}
-                            logoText={identity.slogan_tone.tagline?.split(',')[0]}
-                            tagline={identity.brand_dna.values?.[0] || 'Tagline'}
+                            logoText={identity.brand_name || identity.slogan_tone.tagline?.split(',')[0]}
+                            tagline={identity.slogan_tone.tagline}
                             logoUrl={identity.visuals?.logo_url}
                         />
                     </div>

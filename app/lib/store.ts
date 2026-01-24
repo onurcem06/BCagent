@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { BrandIdentity, INITIAL_BRAND_IDENTITY } from './types';
 
 interface BrandStore {
@@ -27,14 +28,21 @@ const deepMerge = (target: any, source: any): any => {
     return result;
 };
 
-export const useBrandStore = create<BrandStore>((set) => ({
-    identity: INITIAL_BRAND_IDENTITY,
-    currentBrandId: null,
-    updateIdentity: (identity) => set({ identity }),
-    updatePartialIdentity: (partial) =>
-        set((state) => ({
-            identity: deepMerge(state.identity, partial),
-        })),
-    setCurrentBrandId: (id) => set({ currentBrandId: id }),
-    resetIdentity: () => set({ identity: INITIAL_BRAND_IDENTITY, currentBrandId: null }),
-}));
+export const useBrandStore = create<BrandStore>()(
+    persist(
+        (set) => ({
+            identity: INITIAL_BRAND_IDENTITY,
+            currentBrandId: null,
+            updateIdentity: (identity) => set({ identity }),
+            updatePartialIdentity: (partial) =>
+                set((state) => ({
+                    identity: deepMerge(state.identity, partial),
+                })),
+            setCurrentBrandId: (id) => set({ currentBrandId: id }),
+            resetIdentity: () => set({ identity: INITIAL_BRAND_IDENTITY, currentBrandId: null }),
+        }),
+        {
+            name: 'branding-cockpit-storage',
+        }
+    )
+);
