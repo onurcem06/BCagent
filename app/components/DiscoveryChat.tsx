@@ -524,6 +524,13 @@ export default function DiscoveryChat() {
         } else if (event === 'CRITIC_REPORT' && meta) {
             // Insert a special Red Team message bubble
             setMessages(prev => [...prev, { role: 'ai', content: `[RED TEAM]:\n${meta}` }]);
+
+            // Persist to store for Risk Audit View
+            const currentRisks = identity.risk_assessment || [];
+            // Avoid duplicates if possible, or just append
+            if (!currentRisks.includes(meta)) {
+                updatePartialIdentity({ risk_assessment: [...currentRisks, meta] });
+            }
         } else if (event === 'AGENT_LOG' && meta) {
             setSystemStatus(meta);
         }

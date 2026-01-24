@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBrandStore } from '../lib/store';
-import { Palette, Users, Type, Mic, Target, Fingerprint, Download, Presentation, LayoutGrid, Edit3, FileDown, Printer, RefreshCcw, CheckCircle2, Loader2, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { Palette, Users, Type, Mic, Target, Fingerprint, Download, Presentation, LayoutGrid, Edit3, FileDown, Printer, RefreshCcw, CheckCircle2, Loader2, ChevronLeft, ChevronRight, FileText, ShieldAlert } from 'lucide-react';
 import { BrandIdentity } from '../lib/types';
 import { useEffect, useState } from 'react';
 import { BusinessCard } from './mockups/BusinessCard';
@@ -167,7 +167,7 @@ const ExpandedModal = ({ isOpen, onClose, children, title }: { isOpen: boolean; 
 };
 export default function BrandIdentityBoard() {
     const { identity, updatePartialIdentity, currentBrandId, updateIdentity, latestReport } = useBrandStore();
-    const [viewMode, setViewMode] = useState<'strategy' | 'presentation' | 'guide' | 'report'>('strategy');
+    const [viewMode, setViewMode] = useState<'strategy' | 'guide' | 'report' | 'risks'>('strategy');
     const [editingKey, setEditingKey] = useState<keyof BrandIdentity | null>(null);
     const [editData, setEditData] = useState<any>(null);
     const [isCanvaSyncing, setIsCanvaSyncing] = useState(false);
@@ -318,54 +318,7 @@ export default function BrandIdentityBoard() {
         );
     };
 
-    const renderPresentationMode = () => {
-        const slides = [
-            {
-                title: 'Professional Collateral',
-                desc: 'How the brand translates to physical brand assets.',
-                component: (
-                    <div className="bg-slate-100 w-full h-full flex items-center justify-center p-8">
-                        <BusinessCard
-                            primaryColor={identity.color_palette.primary}
-                            accentColor={identity.color_palette.accent}
-                            font={identity.typography.heading_font}
-                            logoText={identity.brand_name || identity.slogan_tone.tagline?.split(',')[0]}
-                            tagline={identity.slogan_tone.tagline}
-                            logoUrl={identity.visuals?.logo_url}
-                        />
-                    </div>
-                )
-            }
-        ];
-
-        return (
-            <div className="relative h-[calc(100vh-180px)] bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl flex flex-col">
-                <div className="flex-1 relative overflow-hidden bg-slate-950">
-                    <AnimatePresence mode="wait">
-                        <motion.div key={activeSlide} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                            className="w-full h-full flex flex-col">
-                            {slides[activeSlide].component}
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
-                <div className="bg-slate-900/90 backdrop-blur-md p-6 border-t border-slate-800 flex items-center justify-between">
-                    <div>
-                        <h3 className="text-xl font-bold text-white">{slides[activeSlide].title}</h3>
-                        <p className="text-slate-400 text-sm">{slides[activeSlide].desc}</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <span className="text-xs font-mono text-slate-500">{activeSlide + 1} / {slides.length}</span>
-                        <div className="flex gap-2">
-                            <button onClick={() => setActiveSlide(prev => (prev > 0 ? prev - 1 : slides.length - 1))}
-                                className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full text-white transition-all"><ChevronLeft className="w-5 h-5" /></button>
-                            <button onClick={() => setActiveSlide(prev => (prev < slides.length - 1 ? prev + 1 : 0))}
-                                className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full text-white transition-all"><ChevronRight className="w-5 h-5" /></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
+    // function renderPresentationMode removed
 
     return (
         <div className="h-full bg-slate-950 p-6 overflow-y-auto print:bg-white print:p-0">
@@ -379,14 +332,14 @@ export default function BrandIdentityBoard() {
                         <button onClick={() => setViewMode('strategy')} className={`px-4 py-1.5 rounded-md text-xs font-bold flex items-center gap-2 transition-all ${viewMode === 'strategy' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}>
                             <LayoutGrid className="w-3 h-3" /> Strategy
                         </button>
-                        <button onClick={() => setViewMode('presentation')} className={`px-4 py-1.5 rounded-md text-xs font-bold flex items-center gap-2 transition-all ${viewMode === 'presentation' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-                            <Presentation className="w-3 h-3" /> Presentation
-                        </button>
                         <button onClick={() => setViewMode('guide')} className={`px-4 py-1.5 rounded-md text-xs font-bold flex items-center gap-2 transition-all ${viewMode === 'guide' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}>
                             <FileDown className="w-3 h-3" /> Brand Guide
                         </button>
                         <button onClick={() => setViewMode('report')} className={`px-4 py-1.5 rounded-md text-xs font-bold flex items-center gap-2 transition-all ${viewMode === 'report' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}>
                             <FileText className="w-3 h-3" /> Master Report
+                        </button>
+                        <button onClick={() => setViewMode('risks')} className={`px-4 py-1.5 rounded-md text-xs font-bold flex items-center gap-2 transition-all ${viewMode === 'risks' ? 'bg-red-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+                            <ShieldAlert className="w-3 h-3" /> Risk Audit
                         </button>
                     </div>
                     <div className="flex items-center gap-2">
@@ -448,8 +401,6 @@ export default function BrandIdentityBoard() {
                         );
                     })}
                 </div>
-            ) : viewMode === 'presentation' ? (
-                renderPresentationMode()
             ) : viewMode === 'report' ? (
                 <div className="bg-slate-900 rounded-2xl p-8 md:p-12 max-w-4xl mx-auto shadow-2xl border border-slate-800">
                     {latestReport ? (
@@ -461,6 +412,38 @@ export default function BrandIdentityBoard() {
                             <FileText className="w-16 h-16 mb-4 opacity-20" />
                             <p className="text-sm font-medium">Henüz detaylı bir strateji raporu oluşturulmadı.</p>
                             <p className="text-xs opacity-60">Ajans ekibi analizi tamamladığında rapor burada görünecek.</p>
+                        </div>
+                    )}
+                </div>
+            ) : viewMode === 'risks' ? (
+                <div className="bg-slate-900 rounded-2xl p-8 md:p-12 max-w-4xl mx-auto shadow-2xl border border-slate-800">
+                    <div className="flex items-center gap-4 mb-8 pb-8 border-b border-slate-800">
+                        <div className="p-4 bg-red-500/10 rounded-2xl border border-red-500/20">
+                            <ShieldAlert className="w-12 h-12 text-red-500" />
+                        </div>
+                        <div>
+                            <h2 className="text-3xl font-bold text-white">Critical Risk Audit</h2>
+                            <p className="text-slate-400">Red Team analysis and vulnerability report.</p>
+                        </div>
+                    </div>
+
+                    {identity.risk_assessment && identity.risk_assessment.length > 0 ? (
+                        <div className="space-y-6">
+                            {identity.risk_assessment.map((risk, i) => (
+                                <div key={i} className="p-6 bg-red-950/10 border border-red-900/30 rounded-xl relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+                                    <h4 className="text-red-400 font-bold text-sm uppercase mb-2 tracking-widest flex items-center gap-2">
+                                        <ShieldAlert className="w-4 h-4" /> Risk Factor #{i + 1}
+                                    </h4>
+                                    <p className="text-slate-300 leading-relaxed">{risk}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 text-slate-500">
+                            <ShieldAlert className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                            <p>No critical risks identified yet.</p>
+                            <p className="text-xs mt-2">The Red Team assumes your strategy is solid (for now).</p>
                         </div>
                     )}
                 </div>

@@ -61,6 +61,7 @@ export type BrandIdentity = {
   status?: 'draft' | 'confirmed';
   deleted?: boolean;
   master_report_content?: string;
+  risk_assessment?: string[];
 };
 
 
