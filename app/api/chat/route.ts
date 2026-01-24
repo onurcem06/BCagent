@@ -61,7 +61,13 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Pr
 
 async function runAgent(apiKey: string, systemPrompt: string, userContent: string, imageName?: string) {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME, systemInstruction: systemPrompt });
+    const model = genAI.getGenerativeModel({
+        model: MODEL_NAME,
+        systemInstruction: systemPrompt,
+        // tools: [{ googleSearchRetrieval: {} }]
+        // Note: Enabling explicit tool requires Project ID config in some versions.
+        // For now, relying on the 'gemini-2.0-flash' internal knowledge + prompt 'SEARCH_TOOL' instruction simulation until full config is set.
+    });
 
     return await withRetry(async () => {
         if (imageName) { // Image processing if needed for specialized agents
@@ -114,6 +120,20 @@ export async function POST(req: Request) {
         `;
         const marketeerReport = await runAgent(apiKey, AGENT_PROMPTS.MARKETEER, marketInput);
 
+        // 4. AŞAMA: RED TEAM / CRITIC (Tüm çalışmayı denetler)
+        console.log("--- FAZ 4: RED TEAM DENETİMİ ---");
+        const criticInput = `
+        KULLANICI TALEBİ: ${lastUserMessage}
+        --- MEVCUT ANALİZLER ---
+        [SOSYOLOG]: ${sociologistReport}
+        [PSİKOLOG]: ${psychologistReport}
+        [STRATEJİST]: ${strategistReport}
+        [PAZARLAMACI]: ${marketeerReport}
+
+        GÖREV: Bu taslak stratejiyi 'Klişe', 'Risk' ve 'Zayıf Nokta' açısından acımasızca eleştir.
+        `;
+        const criticReport = await runAgent(apiKey, AGENT_PROMPTS.CRITIC, criticInput);
+
 
         console.log("--- TÜM RAPORLAR HAZIR: SAVAŞ ODASI ---");
 
@@ -136,9 +156,14 @@ ${strategistReport}
 [PAZARLAMA UZMANI RAPORU]:
 ${marketeerReport}
 
+[RED TEAM / DENETÇİ RAPORU]:
+${criticReport}
+
 --- TALİMAT ---
 --- TALİMAT ---
-Bu raporları kullanarak tam kapsamlı markayı inşa et. Tüm uzmanların (özellikle yeni katılan Pazarlamacı'nın) önerilerini birleştir. Tutarsızlık varsa Stratejist'in görsel, Pazarlamacı'nın ticari kararlarına güven.
+Bu raporları kullanarak tam kapsamlı markayı inşa et. Tüm uzmanların önerilerini birleştir.
+ÖZELLİKLE DIKKAT ET: Denetçi'nin (Red Team) uyarılarını mutlaka dikkate al ve stratejideki riskli kısımları revize et. Eğer Denetçi 'Red' verdiyse o kısmı düzeltmeden final raporu oluşturma.
+Pazarlamacı'nın ticari kararlarına güven.
 
 ÖNEMLİ: Çıktıyı İKİ BÖLÜM halinde ver:
 1. "MASTER BRAND BLUEPRINT" Markdown Raporu (System Prompt'ta belirtilen şablona uygun).
