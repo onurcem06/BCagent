@@ -4,7 +4,9 @@ import { BrandIdentity, INITIAL_BRAND_IDENTITY } from './types';
 interface BrandStore {
     identity: BrandIdentity;
     currentBrandId: string | null;
+    latestReport: string | null;
     updateIdentity: (identity: BrandIdentity) => void;
+    setLatestReport: (report: string) => void;
     updatePartialIdentity: (partial: Partial<BrandIdentity>) => void;
     setCurrentBrandId: (id: string | null) => void;
     resetIdentity: () => void;
@@ -30,11 +32,13 @@ const deepMerge = (target: any, source: any): any => {
 export const useBrandStore = create<BrandStore>((set) => ({
     identity: INITIAL_BRAND_IDENTITY,
     currentBrandId: null,
+    latestReport: null,
     updateIdentity: (identity) => set({ identity }),
+    setLatestReport: (report) => set({ latestReport: report }),
     updatePartialIdentity: (partial) =>
         set((state) => ({
             identity: deepMerge(state.identity, partial),
         })),
     setCurrentBrandId: (id) => set({ currentBrandId: id }),
-    resetIdentity: () => set({ identity: INITIAL_BRAND_IDENTITY, currentBrandId: null }),
+    resetIdentity: () => set({ identity: INITIAL_BRAND_IDENTITY, currentBrandId: null, latestReport: null }),
 }));

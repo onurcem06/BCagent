@@ -52,7 +52,7 @@ const MessageContent = ({ content }: { content: string }) => {
 };
 
 export default function DiscoveryChat() {
-    const { identity, updatePartialIdentity, currentBrandId, setCurrentBrandId } = useBrandStore();
+    const { identity, updatePartialIdentity, currentBrandId, setCurrentBrandId, setLatestReport } = useBrandStore();
     const [messages, setMessages] = useState<{ role: 'ai' | 'user'; content: string; image?: string | null }[]>([
         { role: 'ai', content: "[DİREKTÖR]: Merhaba! Branding Cockpit'e hoş geldiniz. Bugün markanızın temellerini uzman ekibimle birlikte inşa edeceğiz.\n\nBaşlamadan önce ajans protokolümüz gereği şu bilgilere ihtiyacımız var:\n1. Markanızın adı (Veya bulmamızı ister misiniz?)\n2. Sektörünüz ve varsa web sitesi linkiniz\n3. İlham verebilecek referans markalar veya dosyalar\n\nHangi marka üzerinde çalışıyoruz?" }
     ]);
@@ -211,14 +211,24 @@ export default function DiscoveryChat() {
         const match = text.match(jsonRegex);
 
         let cleanedJson = "";
+        let markdownReport = "";
+
         if (match && match[1]) {
             cleanedJson = match[1].trim();
+            // Assuming the markdown report comes BEFORE the JSON block
+            markdownReport = text.split('```json')[0].trim();
         } else {
             const firstBrace = text.indexOf('{');
             const lastBrace = text.lastIndexOf('}');
             if (firstBrace !== -1 && lastBrace !== -1) {
                 cleanedJson = text.substring(firstBrace, lastBrace + 1);
+                markdownReport = text.substring(0, firstBrace).trim();
             }
+        }
+
+        // Save report to store if it exists and looks like a report
+        if (markdownReport && (markdownReport.includes('#') || markdownReport.includes('**'))) {
+            setLatestReport(markdownReport);
         }
 
         if (cleanedJson) {

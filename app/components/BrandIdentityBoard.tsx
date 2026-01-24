@@ -2,13 +2,14 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBrandStore } from '../lib/store';
-import { Palette, Users, Type, Mic, Target, Fingerprint, Download, Presentation, LayoutGrid, Edit3, FileDown, Printer, RefreshCcw, CheckCircle2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Palette, Users, Type, Mic, Target, Fingerprint, Download, Presentation, LayoutGrid, Edit3, FileDown, Printer, RefreshCcw, CheckCircle2, Loader2, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { BrandIdentity } from '../lib/types';
 import { useEffect, useState } from 'react';
 import { BusinessCard } from './mockups/BusinessCard';
 import BrandGuidePDF from './BrandGuidePDF';
 import { triggerCanvaAutofill } from '../lib/canvaService';
 import { markAsConfirmed } from '../lib/brandsService';
+import ReactMarkdown from 'react-markdown';
 
 // Helper Component for Font Preview
 const FontPreview = ({ font, label }: { font: string; label: string }) => {
@@ -21,6 +22,7 @@ const FontPreview = ({ font, label }: { font: string; label: string }) => {
             document.head.appendChild(link);
         }
     }, [font]);
+
 
     if (!font || font === 'draft') return <div className="text-xs text-slate-500 mb-1"><span className="text-slate-400">{label}:</span> draft</div>;
 
@@ -164,8 +166,8 @@ const ExpandedModal = ({ isOpen, onClose, children, title }: { isOpen: boolean; 
     );
 };
 export default function BrandIdentityBoard() {
-    const { identity, updatePartialIdentity, currentBrandId, updateIdentity } = useBrandStore();
-    const [viewMode, setViewMode] = useState<'strategy' | 'presentation' | 'guide'>('strategy');
+    const { identity, updatePartialIdentity, currentBrandId, updateIdentity, latestReport } = useBrandStore();
+    const [viewMode, setViewMode] = useState<'strategy' | 'presentation' | 'guide' | 'report'>('strategy');
     const [editingKey, setEditingKey] = useState<keyof BrandIdentity | null>(null);
     const [editData, setEditData] = useState<any>(null);
     const [isCanvaSyncing, setIsCanvaSyncing] = useState(false);
@@ -399,6 +401,9 @@ export default function BrandIdentityBoard() {
                         <button onClick={() => setViewMode('guide')} className={`px-4 py-1.5 rounded-md text-xs font-bold flex items-center gap-2 transition-all ${viewMode === 'guide' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}>
                             <FileDown className="w-3 h-3" /> Brand Guide
                         </button>
+                        <button onClick={() => setViewMode('report')} className={`px-4 py-1.5 rounded-md text-xs font-bold flex items-center gap-2 transition-all ${viewMode === 'report' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+                            <FileText className="w-3 h-3" /> Master Report
+                        </button>
                     </div>
                     <div className="flex items-center gap-2">
                         <button onClick={handleCanvaSync} disabled={isCanvaSyncing || !identity.brand_dna.purpose} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-all disabled:opacity-50">
@@ -461,6 +466,20 @@ export default function BrandIdentityBoard() {
                 </div>
             ) : viewMode === 'presentation' ? (
                 renderPresentationMode()
+            ) : viewMode === 'report' ? (
+                <div className="bg-slate-900 rounded-2xl p-8 md:p-12 max-w-4xl mx-auto shadow-2xl border border-slate-800">
+                    {latestReport ? (
+                        <article className="prose prose-invert prose-lg max-w-none">
+                            <ReactMarkdown>{latestReport}</ReactMarkdown>
+                        </article>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-64 text-slate-500">
+                            <FileText className="w-16 h-16 mb-4 opacity-20" />
+                            <p className="text-sm font-medium">Henüz detaylı bir strateji raporu oluşturulmadı.</p>
+                            <p className="text-xs opacity-60">Ajans ekibi analizi tamamladığında rapor burada görünecek.</p>
+                        </div>
+                    )}
+                </div>
             ) : (
                 <div className="print:block">
                     <BrandGuidePDF />
