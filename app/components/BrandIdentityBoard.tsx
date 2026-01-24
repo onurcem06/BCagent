@@ -117,7 +117,7 @@ const SocialMediaPreview = ({ data, fullIdentity }: { data: any, fullIdentity?: 
     const bodyFont = fullIdentity?.typography.body_font || 'sans-serif';
     const socialImageUrl = fullIdentity?.visuals?.social_url;
     const logoUrl = fullIdentity?.visuals?.logo_url;
-    const brandName = fullIdentity?.slogan_tone.tagline?.split(',')[0] || "Brand";
+    const brandName = fullIdentity?.brand_name || fullIdentity?.slogan_tone.tagline?.split(',')[0] || "Brand";
 
     return (
         <div className="w-full h-full flex flex-col bg-white text-slate-900 font-sans">

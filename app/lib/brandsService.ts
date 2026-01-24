@@ -2,8 +2,8 @@ import { db } from './firebase';
 import { doc, setDoc, getDoc, collection, query, getDocs, orderBy, serverTimestamp, DocumentData, QueryDocumentSnapshot, deleteDoc } from 'firebase/firestore';
 import { BrandIdentity } from './types';
 
-export const saveBrandIdentity = async (id: string, identity: BrandIdentity, name?: string) => {
-    if (!db) return false;
+export const saveBrandIdentity = async (id: string, identity: BrandIdentity, name?: string): Promise<string | null> => {
+    if (!db) return null;
     try {
         const brandRef = doc(db, 'brands', id);
 
@@ -17,13 +17,13 @@ export const saveBrandIdentity = async (id: string, identity: BrandIdentity, nam
         await setDoc(brandRef, {
             ...identity,
             id,
-            name: brandName,
+            brand_name: brandName, // Ensure consistency
             updatedAt: serverTimestamp()
         }, { merge: true });
-        return true;
+        return id;
     } catch (error) {
         console.error("Error saving brand identity:", error);
-        return false;
+        return null;
     }
 };
 
@@ -33,7 +33,11 @@ export const getBrandIdentity = async (id: string): Promise<BrandIdentity | null
         const brandRef = doc(db, 'brands', id);
         const docSnap = await getDoc(brandRef);
         if (docSnap.exists()) {
-            return docSnap.data() as BrandIdentity;
+            const data = docSnap.data();
+            return {
+                id: docSnap.id,
+                ...data
+            } as any;
         }
         return null;
     } catch (error) {

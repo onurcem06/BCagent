@@ -81,6 +81,7 @@ export default function BrandLibrary({ onClose }: { onClose?: () => void }) {
     };
 
     const filteredBrands = brands.filter(b =>
+        b.brand_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         b.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         b.brand_dna?.purpose?.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -155,7 +156,7 @@ export default function BrandLibrary({ onClose }: { onClose?: () => void }) {
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1 min-w-0">
                                         <h3 className={`font-bold text-sm truncate ${currentBrandId === brand.id ? 'text-purple-400' : 'text-slate-200'}`}>
-                                            {brand.name || "Adsız Marka"}
+                                            {brand.brand_name || brand.name || "Adsız Marka"}
                                         </h3>
                                         <p className="text-[10px] text-slate-500 mt-1 line-clamp-1 font-medium italic">
                                             {brand.brand_dna?.purpose || "Açıklama yok"}
