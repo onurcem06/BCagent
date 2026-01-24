@@ -291,17 +291,18 @@ export default function DiscoveryChat() {
     return (
         <div className="flex h-full bg-slate-950 overflow-hidden">
             {/* Left Main Chat Area */}
-            <div className="flex-1 flex flex-col bg-slate-900/40 backdrop-blur-2xl border-r border-slate-800/60 relative overflow-hidden">
+            <div className="flex-[2] flex flex-col bg-slate-900/40 backdrop-blur-2xl border-r border-slate-800/60 relative overflow-hidden min-w-0">
                 {/* Header */}
                 <div className="p-4 border-b border-slate-800/50 flex flex-col gap-1 bg-slate-900/20">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setShowLibrary(!showLibrary)}
-                                className={`p-1.5 rounded-lg transition-all ${showLibrary ? 'bg-purple-600 text-white' : 'hover:bg-slate-800 text-slate-400'}`}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-xs font-bold uppercase tracking-wider ${showLibrary ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
                                 title="Marka Kütüphanesi"
                             >
-                                <Library className="w-5 h-5" />
+                                <Library className="w-4 h-4" />
+                                <span>Projelerim</span>
                             </button>
                             <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                                 Branding Cockpit
@@ -364,7 +365,7 @@ export default function DiscoveryChat() {
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
                     {messages.map((msg, idx) => (
                         <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[85%] rounded-2xl p-3.5 text-sm leading-relaxed shadow-xl ${msg.role === 'user'
+                            <div className={`max-w-[90%] md:max-w-[80%] rounded-2xl p-4 md:p-6 text-sm md:text-base leading-relaxed shadow-xl ${msg.role === 'user'
                                 ? 'bg-purple-600 text-white rounded-br-none shadow-purple-900/20'
                                 : 'bg-slate-800/90 text-slate-200 rounded-bl-none border border-slate-700/50 backdrop-blur-sm'
                                 }`}>
