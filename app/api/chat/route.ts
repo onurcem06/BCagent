@@ -76,6 +76,7 @@ async function runAgent(apiKey: string, systemPrompt: string, userContent: strin
     const model = genAI.getGenerativeModel({
         model: MODEL_NAME,
         systemInstruction: systemPrompt,
+        tools: [{ googleSearch: {} }] as any[]
     });
 
     return await withRetry(async () => {
