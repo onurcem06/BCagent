@@ -52,6 +52,10 @@ export default function BrandLibrary({ onClose }: { onClose?: () => void }) {
         if (identity) {
             setCurrentBrandId(id);
             updateIdentity(identity);
+            // Restore the master report to the store visuals
+            if (identity.master_report_content) {
+                useBrandStore.getState().setLatestReport(identity.master_report_content);
+            }
             if (onClose) onClose();
         }
     };

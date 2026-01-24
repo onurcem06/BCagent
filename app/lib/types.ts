@@ -60,6 +60,7 @@ export type BrandIdentity = {
   };
   status?: 'draft' | 'confirmed';
   deleted?: boolean;
+  master_report_content?: string;
 };
 
 
@@ -77,7 +78,8 @@ export const INITIAL_BRAND_IDENTITY: BrandIdentity = {
     social_url: "",
     logo_url: ""
   },
-  status: 'draft'
+  status: 'draft',
+  master_report_content: ""
 };
 
 export type BrandIdentityKeys = keyof BrandIdentity;

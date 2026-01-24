@@ -200,9 +200,12 @@ export default function DiscoveryChat() {
     const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
     const [lastTriggeredData, setLastTriggeredData] = useState<string>('');
 
-    // Auto-save to Firestore (Debounced)
+    // Auto-save to Firestore (Debounced) - Only if meaningful data exists
     useEffect(() => {
         if (!currentBrandId) return;
+
+        // Prevent ghost records: Only save if there is at least a purpose or name
+        if (!identity.brand_dna.purpose && !identity.brand_name) return;
 
         const timer = setTimeout(async () => {
             setIsSaving(true);
@@ -342,6 +345,8 @@ export default function DiscoveryChat() {
         // Save report to store if it exists and looks like a report
         if (markdownReport && (markdownReport.includes('#') || markdownReport.includes('**'))) {
             setLatestReport(markdownReport);
+            // Also update identity state so it persists to DB
+            updatePartialIdentity({ master_report_content: markdownReport });
         }
 
         if (cleanedJson) {
