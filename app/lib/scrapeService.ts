@@ -5,6 +5,7 @@ export interface ScrapedData {
     url: string;
     title: string;
     description: string;
+    keywords: string;
     text: string;
     imageUrl: string | null;
     imageBuffer?: Buffer | null;
@@ -35,6 +36,8 @@ export async function scrapeWebsite(url: string): Promise<ScrapedData | null> {
         const description = $('meta[name="description"]').attr('content') ||
             $('meta[property="og:description"]').attr('content') || '';
 
+        const keywords = $('meta[name="keywords"]').attr('content') || '';
+
         // Find best image
         const ogImage = $('meta[property="og:image"]').attr('content');
         const twitterImage = $('meta[name="twitter:image"]').attr('content');
@@ -50,13 +53,16 @@ export async function scrapeWebsite(url: string): Promise<ScrapedData | null> {
         }
 
         // 3. Extract Clean Text
+        // Strategy: Capture Headings SEPARATELY to ensure they aren't lost in the 'remove cleanup'
+        const headings = $('h1, h2, h3').map((i, el) => $(el).text()).get().join('\n');
+
         // Remove noise
         $('script').remove();
         $('style').remove();
         $('nav').remove();
         $('footer').remove();
         $('iframe').remove();
-        $('noscript').remove(); // remove noscript tags which often contain "enable js" msgs
+        $('noscript').remove();
 
         // Get body text
         let text = $('body').text();
@@ -64,9 +70,14 @@ export async function scrapeWebsite(url: string): Promise<ScrapedData | null> {
         // Clean whitespace
         text = text.replace(/\s+/g, ' ').trim();
 
-        // VALIDATION: If text is too short, it's likely a JS-only site or blocked
-        if (text.length < 200) {
-            console.warn(`Scrape warning: Text too short (${text.length} chars) for ${url}. Treating as failed to avoid hallucinations.`);
+        // Merge Headings into Text (if not already redundant, but repetition helps AI focus)
+        text = `*** PAGE HEADERS ***\n${headings}\n\n*** PAGE CONTENT ***\n${text}`;
+
+        // VALIDATION: Relaxed check
+        // If text is extremely short AND we lack critical metadata, then fail.
+        // But if we have Title/Description (SEO Data), we must return it because the User relies on it.
+        if (text.length < 50 && !title && !description) {
+            console.warn(`Scrape warning: Content empty and no metadata for ${url}.`);
             return null;
         }
 
@@ -96,6 +107,7 @@ export async function scrapeWebsite(url: string): Promise<ScrapedData | null> {
             url,
             title,
             description,
+            keywords,
             text,
             imageUrl,
             imageBuffer

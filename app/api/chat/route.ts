@@ -149,6 +149,7 @@ export async function POST(req: Request) {
                             URL: ${scrapeResult.url}
                             BAŞLIK: ${scrapeResult.title}
                             AÇIKLAMA: ${scrapeResult.description}
+                            ANAHTAR KELİMELER (SEO): ${scrapeResult.keywords}
                             İÇERİK ÖZETİ: ${scrapeResult.text}
                             `;
 
@@ -156,10 +157,10 @@ export async function POST(req: Request) {
                                 siteImageBuffer = scrapeResult.imageBuffer;
                                 sendEvent('AGENT_LOG', `[SİSTEM]: Site görseli ve içeriği başarıyla alındı.`);
                             } else {
-                                sendEvent('AGENT_LOG', `[SİSTEM]: Site içeriği okundu (Görsel alınamadı).`);
+                                sendEvent('AGENT_LOG', `[SİSTEM]: Site içeriği ve SEO verileri okundu.`);
                             }
                         } else {
-                            sendEvent('AGENT_LOG', `[SİSTEM]: Siteye erişilemedi, normal analiz yapılıyor.`);
+                            sendEvent('AGENT_LOG', `[SİSTEM]: Siteye doğrudan erişilemedi, Google Search devreye girecek.`);
                         }
                     }
 
@@ -186,12 +187,12 @@ export async function POST(req: Request) {
                         let analysisPrompt = "";
 
                         if (scrapedContext) {
-                            analysisPrompt = `KULLANICI MESAJI: ${lastUserMessage}\n\n${scrapedContext}\n\nTALİMAT: Yukarıdaki WEB SİTESİ verilerini (ve varsa görseli) temel alarak analiz yap. Sektörü ve markayı bu verilere göre tanımla.`;
+                            analysisPrompt = `KULLANICI MESAJI: ${lastUserMessage}\n\n${scrapedContext}\n\nTALİMAT: Yukarıdaki WEB SİTESİ verilerini (ve varsa görseli) temel alarak analiz yap. Sektörü, markayı ve verilen hizmetleri (SEO title/desc dâhil) bu verilere göre tanımla.\n\nÖNEMLİ: Eğer içerik "access denied" gibi görünüyorsa veya çok azsa, hemen 'googleSearch' yeteneğini kullanarak bu markayı internette ara ve bilgileri tamamla.`;
                         } else {
                             // If no scraped context, check if the user message was just a URL
                             const isUrlOnly = /^https?:\/\/[^\s]+$/.test(lastUserMessage.trim());
                             if (isUrlOnly) {
-                                analysisPrompt = `KULLANICI MESAJI: ${lastUserMessage}\n\nDURUM: Verilen URL'nin içeriğine teknik bir engel (SPA/Bot Koruması) nedeniyle erişilemedi.\n\nKRİTİK TALİMAT: SAKIN URL isminden tahmin yürütme (Örn: 'autoban' kelimesini görüp araba markası uydurma). Bunun yerine kullanıcıya dürüstçe "Site içeriğine doğrudan erişemedim, lütfen markanızın sektörünü ve ne yaptığını kısaca yazar mısınız?" diye sor.`;
+                                analysisPrompt = `KULLANICI MESAJI: ${lastUserMessage}\n\nDURUM: Verilen URL'nin içeriğine doğrudan teknik erişim sağlanamadı.\n\nKRİTİK TALİMAT: Kullanıcı sadece bir URL paylaştı. 'googleSearch' aracını KULLANARAK bu URL'yi ve markayı internette araştır. Asla tahmin yürütme. Eğer arama sonucunda da veri bulamazsan kullanıcıdan detay iste.`;
                             } else {
                                 analysisPrompt = `Analiz et: ${lastUserMessage}`;
                             }

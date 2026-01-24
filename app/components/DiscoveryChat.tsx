@@ -549,7 +549,7 @@ export default function DiscoveryChat() {
                             </div>
                             <div>
                                 <h2 className="text-lg font-bold text-white leading-tight">Branding Cockpit</h2>
-                                <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Strategic AI Studio V3.2 (Brain+Scraping Live)</p>
+                                <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Strategic AI Studio V3.2.1 (Enhanced Scraping & Search)</p>
                             </div>
                         </div>
                         <button
