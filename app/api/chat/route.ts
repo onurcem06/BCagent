@@ -84,20 +84,40 @@ export async function POST(req: Request) {
         const genAI = new GoogleGenerativeAI(apiKey);
         const lastUserMessage = newMessage.content;
 
-        // 1. AŞAMA: PARALEL UZMAN ANALİZİ (Multi-Agent Thinking)
-        // Anahtar kelime veya görsel analizi için alt ajanları tetikliyoruz.
-        console.log("--- MULTI-AGENT ANALİZ BAŞLIYOR ---");
-
-        const [sociologistReport, psychologistReport, strategistReport] = await Promise.all([
+        // 1. AŞAMA: TEMEL ANALİZ (Sociologist & Psychologist - Paralel)
+        console.log("--- FAZ 1: TEMEL ANALİZ ---");
+        const [sociologistReport, psychologistReport] = await Promise.all([
             runAgent(apiKey, AGENT_PROMPTS.SOCIOLOGIST, `Analiz et: ${lastUserMessage}`),
-            runAgent(apiKey, AGENT_PROMPTS.PSYCHOLOGIST, `Analiz et: ${lastUserMessage}`),
-            runAgent(apiKey, AGENT_PROMPTS.STRATEGIST, `Analiz et: ${lastUserMessage}`)
+            runAgent(apiKey, AGENT_PROMPTS.PSYCHOLOGIST, `Analiz et: ${lastUserMessage}`)
         ]);
 
-        console.log("--- UZMAN RAPORLARI HAZIR ---");
+        // 2. AŞAMA: GÖRSEL STRATEJİ (Strategist - Faz 1'den beslenir)
+        console.log("--- FAZ 2: GÖRSEL STRATEJİ ---");
+        const stratInput = `
+        KULLANICI TALEBİ: ${lastUserMessage}
+        SOSYOLOG RAPORU: ${sociologistReport}
+        PSİKOLOG RAPORU: ${psychologistReport}
+        
+        GÖREV: Bu analizlere dayanarak görsel stratejiyi oluştur.
+        `;
+        const strategistReport = await runAgent(apiKey, AGENT_PROMPTS.STRATEGIST, stratInput);
 
-        // 2. AŞAMA: SAVAŞ ODASI (WAR ROOM) TOPLANTISI
-        // Uzman raporlarını Direktör için birleştiriyoruz.
+        // 3. AŞAMA: PAZARLAMA VE BÜYÜME (Marketeer - Faz 1 ve 2'den beslenir)
+        console.log("--- FAZ 3: PAZARLAMA STRATEJİSİ ---");
+        const marketInput = `
+        KULLANICI TALEBİ: ${lastUserMessage}
+        SOSYOLOG RAPORU: ${sociologistReport}
+        PSİKOLOG RAPORU: ${psychologistReport}
+        STRATEJİST RAPORU: ${strategistReport}
+
+        GÖREV: Bu marka kimliğine uygun pazarlama ve büyüme stratejisini oluştur.
+        `;
+        const marketeerReport = await runAgent(apiKey, AGENT_PROMPTS.MARKETEER, marketInput);
+
+
+        console.log("--- TÜM RAPORLAR HAZIR: SAVAŞ ODASI ---");
+
+        // 4. AŞAMA: SAVAŞ ODASI (WAR ROOM)
         const warRoomContext = `
 GÖREV: Aşağıdaki kullanıcı talebi için uzman ekipten gelen raporları sentezle ve nihai stratejiyi belirle.
 
@@ -113,8 +133,12 @@ ${psychologistReport}
 [STRATEJİST RAPORU]:
 ${strategistReport}
 
+[PAZARLAMA UZMANI RAPORU]:
+${marketeerReport}
+
 --- TALİMAT ---
-Bu raporları kullanarak, markanın kimliğini oluştur. Çelişkili öneriler varsa Stratejist'in (Pazar odaklı) önerisine öncelik ver ama Sosyolog'un kültürel uyarılarını asla göz ardı etme.
+--- TALİMAT ---
+Bu raporları kullanarak tam kapsamlı markayı inşa et. Tüm uzmanların (özellikle yeni katılan Pazarlamacı'nın) önerilerini birleştir. Tutarsızlık varsa Stratejist'in görsel, Pazarlamacı'nın ticari kararlarına güven.
 
 ÖNEMLİ: Çıktıyı İKİ BÖLÜM halinde ver:
 1. "MASTER BRAND BLUEPRINT" Markdown Raporu (System Prompt'ta belirtilen şablona uygun).

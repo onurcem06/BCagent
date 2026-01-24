@@ -13,6 +13,7 @@ const ROLE_COLORS: Record<string, string> = {
     '[STRATEJİST]': 'border-blue-500/50 bg-blue-500/10 text-blue-200',
     '[SOSYOLOG]': 'border-amber-500/50 bg-amber-500/10 text-amber-200',
     '[PSİKOLOG]': 'border-cyan-500/50 bg-cyan-500/10 text-cyan-200',
+    '[MARKETEER]': 'border-green-500/50 bg-green-500/10 text-green-200',
 };
 
 const AGENCY_STAFF = [
@@ -20,6 +21,7 @@ const AGENCY_STAFF = [
     { id: 'SOSYOLOG', name: 'Toplum Mühendisi', role: 'Cultural Analyst', color: 'bg-amber-500' },
     { id: 'PSİKOLOG', name: 'Davranış Bilimci', role: 'Behavioral Scientist', color: 'bg-cyan-500' },
     { id: 'STRATEJİST', name: 'Görsel Mimar', role: 'Visual Strategist', color: 'bg-blue-500' },
+    { id: 'MARKETEER', name: 'Pazarlama Direktörü', role: 'Growth Hacker', color: 'bg-green-500' },
 ];
 
 const MessageContent = ({ content }: { content: string }) => {
