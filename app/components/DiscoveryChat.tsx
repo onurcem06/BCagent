@@ -250,10 +250,11 @@ export default function DiscoveryChat() {
     const handleCsvSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Check file size (Vercel payload limit is 4.5MB, base64 adds 33% overhead)
-            const MAX_SIZE = 3 * 1024 * 1024; // 3MB limit for safety
+            // Check file size (Vercel payload limit is 4.5MB, base64 adds 33% overhead, BUT server config might allow deeper)
+            // Increasing application-side limit to 10MB to match user request, knowing server errors might occur if larger than Vercel limits.
+            const MAX_SIZE = 10 * 1024 * 1024; // 10MB limit
             if (file.size > MAX_SIZE) {
-                setMessages(prev => [...prev, { role: 'ai', content: `[DİREKTÖR]: Dosya boyutu çok büyük (${(file.size / (1024 * 1024)).toFixed(2)} MB). Lütfen 3MB'dan küçük bir PDF veya metin dosyası yükleyin.` }]);
+                setMessages(prev => [...prev, { role: 'ai', content: `[DİREKTÖR]: Dosya boyutu çok büyük (${(file.size / (1024 * 1024)).toFixed(2)} MB). Lütfen 10MB'dan küçük bir PDF veya metin dosyası yükleyin.` }]);
                 return;
             }
 
