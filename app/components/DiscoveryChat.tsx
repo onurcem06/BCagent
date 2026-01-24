@@ -6,6 +6,7 @@ import { useBrandStore } from '../lib/store';
 import { saveBrandIdentity } from '../lib/brandsService';
 import { v4 as uuidv4 } from 'uuid';
 import BrandLibrary from './BrandLibrary';
+import RedTeamSidebar from './RedTeamSidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ROLE_COLORS: Record<string, string> = {
@@ -250,11 +251,11 @@ export default function DiscoveryChat() {
     const handleCsvSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Check file size (Vercel payload limit is 4.5MB, base64 adds 33% overhead, BUT server config might allow deeper)
-            // Increasing application-side limit to 10MB to match user request, knowing server errors might occur if larger than Vercel limits.
-            const MAX_SIZE = 10 * 1024 * 1024; // 10MB limit
+            // Check file size (Vercel/Server limit is typically 4.5MB. Base64 adds ~33% overhead.)
+            // We set a safe limit of 3.5MB to ensure the total payload stays under limits.
+            const MAX_SIZE = 3.5 * 1024 * 1024; // 3.5MB limit
             if (file.size > MAX_SIZE) {
-                setMessages(prev => [...prev, { role: 'ai', content: `[DİREKTÖR]: Dosya boyutu çok büyük (${(file.size / (1024 * 1024)).toFixed(2)} MB). Lütfen 10MB'dan küçük bir PDF veya metin dosyası yükleyin.` }]);
+                setMessages(prev => [...prev, { role: 'ai', content: `[DİREKTÖR]: Dosya boyutu sınırın üzerinde (${(file.size / (1024 * 1024)).toFixed(2)} MB). Sistem performansı için lütfen 3.5MB'dan küçük dosyalar yükleyin.` }]);
                 return;
             }
 
@@ -294,8 +295,18 @@ export default function DiscoveryChat() {
                     });
 
                     if (!response.ok) {
-                        const err = await response.json();
-                        throw new Error(err.error || 'Analiz başarısız oldu.');
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.indexOf("application/json") !== -1) {
+                            const err = await response.json();
+                            throw new Error(err.error || 'Analiz başarısız oldu.');
+                        } else {
+                            const params = await response.text();
+                            // Check for common proxy/server errors
+                            if (params.includes('Entity Too Large') || response.status === 413) {
+                                throw new Error('Dosya boyutu sunucu limitini aştı. Lütfen daha küçük bir dosya deneyin.');
+                            }
+                            throw new Error(`Sunucu hatası: ${response.status} ${response.statusText}`);
+                        }
                     }
 
                     const data = await response.json();
@@ -619,9 +630,8 @@ export default function DiscoveryChat() {
                                 : 'bg-slate-800/90 text-slate-200 rounded-bl-none border border-slate-700/50 backdrop-blur-sm'
                                 }`}>
                                 {msg.role === 'ai' ? (
-                                    msg.content.startsWith('[RED TEAM]') ? (
-                                        <RedTeamCritique content={msg.content} />
-                                    ) : (
+                                    /* HIDE RED TEAM MESSAGES FROM MAIN CHAT - They will be shown in the sidebar */
+                                    msg.content.startsWith('[RED TEAM]') ? null : (
                                         <MessageContent content={msg.content.replace(/```json[\s\S]*?```/g, '').trim()} />
                                     )
                                 ) : (

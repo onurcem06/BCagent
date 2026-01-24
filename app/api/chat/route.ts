@@ -183,9 +183,19 @@ export async function POST(req: Request) {
                         sendEvent('AGENT_LOG', '[PSİKOLOG]: Hedef kitle bilinçaltı haritası çıkarılıyor...');
 
                         // Inject Web Context if available
-                        const analysisPrompt = scrapedContext
-                            ? `KULLANICI MESAJI: ${lastUserMessage}\n\n${scrapedContext}\n\nTALİMAT: Yukarıdaki WEB SİTESİ verilerini (ve varsa görseli) temel alarak analiz yap. Sektörü ve markayı bu verilere göre tanımla.`
-                            : `Analiz et: ${lastUserMessage}`;
+                        let analysisPrompt = "";
+
+                        if (scrapedContext) {
+                            analysisPrompt = `KULLANICI MESAJI: ${lastUserMessage}\n\n${scrapedContext}\n\nTALİMAT: Yukarıdaki WEB SİTESİ verilerini (ve varsa görseli) temel alarak analiz yap. Sektörü ve markayı bu verilere göre tanımla.`;
+                        } else {
+                            // If no scraped context, check if the user message was just a URL
+                            const isUrlOnly = /^https?:\/\/[^\s]+$/.test(lastUserMessage.trim());
+                            if (isUrlOnly) {
+                                analysisPrompt = `KULLANICI MESAJI: ${lastUserMessage}\n\nDURUM: Verilen URL'nin içeriğine teknik bir engel (SPA/Bot Koruması) nedeniyle erişilemedi.\n\nKRİTİK TALİMAT: SAKIN URL isminden tahmin yürütme (Örn: 'autoban' kelimesini görüp araba markası uydurma). Bunun yerine kullanıcıya dürüstçe "Site içeriğine doğrudan erişemedim, lütfen markanızın sektörünü ve ne yaptığını kısaca yazar mısınız?" diye sor.`;
+                            } else {
+                                analysisPrompt = `Analiz et: ${lastUserMessage}`;
+                            }
+                        }
 
                         const [socio, psycho] = await Promise.all([
                             runAgent(apiKey, AGENT_PROMPTS.SOCIOLOGIST, analysisPrompt, siteImageBuffer,

@@ -321,22 +321,6 @@ export default function BrandIdentityBoard() {
     const renderPresentationMode = () => {
         const slides = [
             {
-                title: 'Logo Identity',
-                desc: 'Strategic brand mark designed for versatility.',
-                component: (
-                    <div className="w-full h-full bg-slate-50 flex items-center justify-center p-12">
-                        {identity.visuals?.logo_url ? (
-                            <div className="relative group">
-                                <div className="absolute -inset-10 bg-blue-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-all" />
-                                <img src={identity.visuals.logo_url} className="w-64 h-64 object-contain relative z-10 drop-shadow-2xl" alt="Logo" />
-                            </div>
-                        ) : (
-                            <div className="text-slate-400 italic text-sm">Logo not generated yet.</div>
-                        )}
-                    </div>
-                )
-            },
-            {
                 title: 'Professional Collateral',
                 desc: 'How the brand translates to physical brand assets.',
                 component: (

@@ -13,10 +13,14 @@ export interface ScrapedData {
 export async function scrapeWebsite(url: string): Promise<ScrapedData | null> {
     try {
         // 1. Fetch HTML
-        // Use a real User-Agent to avoid immediate blocks
+        // Use a real User-Agent and headers to avoid immediate blocks
         const response = await axios.get(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9,tr;q=0.8',
+                'Referer': 'https://www.google.com/',
+                'Upgrade-Insecure-Requests': '1'
             },
             timeout: 10000 // 10s timeout
         });
@@ -52,12 +56,19 @@ export async function scrapeWebsite(url: string): Promise<ScrapedData | null> {
         $('nav').remove();
         $('footer').remove();
         $('iframe').remove();
+        $('noscript').remove(); // remove noscript tags which often contain "enable js" msgs
 
         // Get body text
         let text = $('body').text();
 
         // Clean whitespace
         text = text.replace(/\s+/g, ' ').trim();
+
+        // VALIDATION: If text is too short, it's likely a JS-only site or blocked
+        if (text.length < 200) {
+            console.warn(`Scrape warning: Text too short (${text.length} chars) for ${url}. Treating as failed to avoid hallucinations.`);
+            return null;
+        }
 
         // Limit text length (Gemini Flash has large context but let's be efficient)
         // 15k characters is usually enough for "About Us" + "Home"
@@ -91,7 +102,7 @@ export async function scrapeWebsite(url: string): Promise<ScrapedData | null> {
         };
 
     } catch (error) {
-        console.error(`Scrape failed for ${url}:`, error);
+        // console.error(`Scrape failed for ${url}:`, error); // Reduce noise
         return null; // Fail gracefully
     }
 }
