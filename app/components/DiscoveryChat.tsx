@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Image as ImageIcon, Sparkles, Loader2, Save, Upload, Library, X } from 'lucide-react';
+import { Send, Image as ImageIcon, Sparkles, Loader2, Save, Upload, Library, X, AlertTriangle } from 'lucide-react';
 import { useBrandStore } from '../lib/store';
 import { saveBrandIdentity } from '../lib/brandsService';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,18 +27,113 @@ const AGENCY_STAFF = [
     { id: 'CRITIC', name: 'Baş Denetçi', role: 'Red Team Lead', color: 'bg-red-600' },
 ];
 
-const AgentAvatar = ({ id, color, name, isThinking, onClick }: { id: string, color: string, name: string, isThinking?: boolean, onClick?: () => void }) => (
-    <div onClick={onClick} className={`relative flex flex-col items-center gap-1 group cursor-pointer p-1 rounded-lg transition-all ${isThinking ? 'bg-amber-500/10' : 'hover:bg-slate-800'}`}>
-        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-white shadow-lg transition-all ${color} ${isThinking ? 'border-amber-400 animate-pulse scale-110' : 'border-slate-900 group-hover:scale-105'}`}>
-            {id[0]}
+interface AgentStatus {
+    status: 'idle' | 'working' | 'done';
+}
+
+const AgentAvatar = ({ id, color, name, status = 'idle', onClick }: { id: string, color: string, name: string, status?: 'idle' | 'working' | 'done', onClick?: () => void }) => {
+    const isWorking = status === 'working';
+    const isDone = status === 'done';
+
+    return (
+        <motion.div
+            onClick={onClick}
+            layout
+            initial={false}
+            animate={{
+                scale: isWorking ? 1.05 : 1,
+                backgroundColor: isWorking ? 'rgba(245, 158, 11, 0.1)' : 'rgba(0,0,0,0)'
+            }}
+            whileHover={{ scale: 1.05, backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
+            className={`relative flex flex-col items-center gap-1 group cursor-pointer p-1 rounded-lg transition-colors`}
+        >
+            <div className={`relative w-8 h-8 rounded-full border-2 flex items-center justify-center text-[10px] font-bold shadow-lg 
+                ${isWorking ? 'border-amber-400 text-white shadow-amber-500/50' : ''}
+                ${isDone ? 'border-green-400 text-white bg-green-500/20' : ''}
+                ${status === 'idle' ? `border-slate-700 text-slate-500 ${color.replace('bg-', 'group-hover:bg-')}` : ''}
+            `}>
+                {/* Active Glow Effect */}
+                {isWorking && (
+                    <motion.div
+                        layoutId="active-glow"
+                        className={`absolute inset-0 rounded-full blur-md opacity-75 ${color}`}
+                        animate={{ opacity: [0.4, 0.8, 0.4] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                )}
+
+                <span className="relative z-10">{status === 'done' ? '✓' : id[0]}</span>
+            </div>
+
+            {/* Status Dot */}
+            <AnimatePresence>
+                {(isWorking || isDone) && (
+                    <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className={`absolute top-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-slate-900 z-20
+                        ${isWorking ? 'bg-amber-500' : 'bg-green-500'}`}
+                    >
+                        {isWorking && (
+                            <motion.div
+                                className="absolute inset-0 rounded-full bg-amber-400"
+                                animate={{ scale: [1, 1.5, 1], opacity: [1, 0, 1] }}
+                                transition={{ duration: 1.5, repeat: Infinity }}
+                            />
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <span className={`text-[9px] font-medium max-w-[60px] truncate text-center hidden md:block transition-colors
+                ${isWorking ? 'text-amber-400 font-bold' : isDone ? 'text-green-400' : 'text-slate-500 group-hover:text-slate-300'}
+            `}>
+                {name.split(' ')[0]}
+            </span>
+        </motion.div>
+    );
+};
+
+const RedTeamCritique = ({ content }: { content: string }) => {
+    // Remove the prefix if it exists
+    const cleanContent = content.replace(/^\[RED TEAM\]:\s*/, '').trim();
+
+    return (
+        <div className="relative group perspective-1000">
+            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative bg-slate-900 border border-red-500/50 rounded-xl overflow-hidden shadow-2xl">
+                {/* Header */}
+                <div className="bg-red-950/30 border-b border-red-900/50 p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="bg-red-500/20 p-1.5 rounded-lg border border-red-500/30 animate-pulse">
+                            <AlertTriangle className="w-4 h-4 text-red-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-xs font-black text-red-400 tracking-widest uppercase">KRİTİK RİSK RAPORU</h3>
+                            <p className="text-[9px] text-red-300/60 font-mono">RED TEAM PROTOCOL v9.0</p>
+                        </div>
+                    </div>
+                    <div className="px-2 py-0.5 bg-red-500/10 border border-red-500/20 rounded text-[9px] text-red-400 font-bold uppercase">
+                        ACTION REQUIRED
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 bg-gradient-to-b from-slate-900 to-red-950/10">
+                    <div className="prose prose-invert prose-sm max-w-none">
+                        <MessageContent content={cleanContent} />
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-2 bg-red-950/20 border-t border-red-900/30 flex items-center justify-end gap-2">
+                    <span className="text-[9px] text-red-500/50 font-mono italic">Bu eleştiriler stratejiye entegre edilmelidir.</span>
+                </div>
+            </div>
         </div>
-        {/* Status Dot */}
-        <div className={`absolute top-1 right-1 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${isThinking ? 'bg-amber-500 animate-ping' : 'bg-green-500'}`} />
-        <span className="text-[9px] font-medium text-slate-400 group-hover:text-white max-w-[60px] truncate text-center hidden md:block">
-            {name.split(' ')[0]}
-        </span>
-    </div>
-);
+    );
+};
 
 const MessageContent = ({ content }: { content: string }) => {
     const parts = content.split(/(\[[A-ZİÜÖĞÇ\s]+\]:)/g);
@@ -78,6 +173,8 @@ export default function DiscoveryChat() {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [showLibrary, setShowLibrary] = useState(false);
+    const [agentStatuses, setAgentStatuses] = useState<Record<string, 'idle' | 'working' | 'done'>>({});
+    const [systemStatus, setSystemStatus] = useState<string>('');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     // ... existing refs ...
@@ -284,6 +381,7 @@ export default function DiscoveryChat() {
         const displayMsg = currentImage ? `${userMsg} [Görsel Yüklendi]` : userMsg;
         setMessages(prev => [...prev, { role: 'user', content: displayMsg }]);
         setIsLoading(true);
+        setAgentStatuses({}); // Reset agents
 
         try {
             const response = await fetch('/api/chat', {
@@ -295,22 +393,122 @@ export default function DiscoveryChat() {
                 }),
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to fetch response');
+            if (!response.ok || !response.body) {
+                throw new Error('Failed to fetch response');
             }
 
-            const data = await response.json();
-            const aiContent = data.content;
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let aiMsgContent = '';
 
-            extractJson(aiContent);
-            setMessages(prev => [...prev, { role: 'ai', content: aiContent }]);
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+
+                // Loop to consume all complete events and safe text
+                while (true) {
+                    const eventStart = buffer.indexOf('__EVENT__');
+
+                    if (eventStart === -1) {
+                        // No event start marker found.
+                        // Flush text safely: keep last 10 chars in case they are part of a partial marker
+                        if (buffer.length > 10) {
+                            const splitIndex = buffer.length - 10;
+                            const textToFlush = buffer.substring(0, splitIndex);
+                            aiMsgContent += textToFlush;
+                            updateDirectorMessage(aiMsgContent);
+                            buffer = buffer.substring(splitIndex);
+                        }
+                        break;
+                    }
+
+                    // We have an event start
+                    // 1. Text before event
+                    if (eventStart > 0) {
+                        const textChunk = buffer.substring(0, eventStart);
+                        aiMsgContent += textChunk;
+                        updateDirectorMessage(aiMsgContent);
+                        buffer = buffer.substring(eventStart);
+                        // Now buffer starts with __EVENT__
+                        continue;
+                    }
+
+                    // 2. Buffer starts with __EVENT__. Find end.
+                    const eventEnd = buffer.indexOf('__EVENT__', 9); // After first marker
+                    if (eventEnd === -1) {
+                        // Incomplete event. Wait for more data.
+                        break;
+                    }
+
+                    // 3. Extract and Process Event
+                    const eventPayloadStr = buffer.substring(9, eventEnd);
+                    try {
+                        const payload = JSON.parse(eventPayloadStr);
+                        handleAgentEvent(payload);
+                    } catch (e) {
+                        console.error("Event parse error", e);
+                    }
+
+                    // 4. Remove event from buffer
+                    buffer = buffer.substring(eventEnd + 9);
+                }
+            }
+
+            // Flush remaining buffer
+            if (buffer) {
+                aiMsgContent += buffer;
+                updateDirectorMessage(aiMsgContent);
+            }
+
+            // Finalize
+            extractJson(aiMsgContent); // Try to extract JSON from the full response
 
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Bir hata oluştu. Lütfen tekrar deneyin.";
             setMessages(prev => [...prev, { role: 'ai', content: message }]);
         } finally {
             setIsLoading(false);
+            setAgentStatuses(prev => {
+                // Mark all as done or idle when finished
+                return prev;
+            });
+        }
+    };
+
+    const updateDirectorMessage = (text: string) => {
+        setMessages(prev => {
+            const newMsgs = [...prev];
+            const lastMsg = newMsgs[newMsgs.length - 1];
+
+            // Should we update the last message or create new?
+            // If last message is AI and NOT a dedicated Red Team bubble, update it.
+            // Red Team bubble content usually starts with [RED TEAM] or [CRITIC]
+            const isRedTeamBubble = lastMsg.role === 'ai' && (lastMsg.content.startsWith('[RED TEAM]') || lastMsg.content.includes('[RED TEAM]:'));
+
+            if (lastMsg.role === 'ai' && !isRedTeamBubble) {
+                newMsgs[newMsgs.length - 1] = { ...lastMsg, content: text };
+                return newMsgs;
+            } else {
+                return [...newMsgs, { role: 'ai', content: text }];
+            }
+        });
+    };
+
+    const handleAgentEvent = (payload: { event: string; meta?: string }) => {
+        const { event, meta } = payload;
+
+        if (event === 'AGENT_START' && meta) {
+            setAgentStatuses(prev => ({ ...prev, [meta]: 'working' }));
+        } else if (event === 'AGENT_DONE' && meta) {
+            setAgentStatuses(prev => ({ ...prev, [meta]: 'done' }));
+        } else if (event === 'CRITIC_REPORT' && meta) {
+            // Insert a special Red Team message bubble
+            setMessages(prev => [...prev, { role: 'ai', content: `[RED TEAM]:\n${meta}` }]);
+        } else if (event === 'AGENT_LOG' && meta) {
+            setSystemStatus(meta);
         }
     };
 
@@ -345,7 +543,7 @@ export default function DiscoveryChat() {
                             <AgentAvatar
                                 key={staff.id}
                                 {...staff}
-                                isThinking={isLoading}
+                                status={agentStatuses[staff.id]}
                                 onClick={() => {
                                     setInput(`@${staff.id}: `);
                                     textareaRef.current?.focus();
@@ -353,6 +551,22 @@ export default function DiscoveryChat() {
                             />
                         ))}
                     </div>
+
+                    {/* System Status Log */}
+                    <AnimatePresence mode="wait">
+                        {systemStatus && (
+                            <motion.div
+                                key={systemStatus} // Key changes trigger animation
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -5 }}
+                                className="mt-1 px-1 flex items-center gap-2 bg-slate-900/50 p-1 rounded border border-amber-500/20 max-w-full"
+                            >
+                                <Loader2 className="w-3 h-3 text-amber-500 animate-spin shrink-0" />
+                                <span className="text-[10px] font-mono text-amber-500/90 truncate">{systemStatus}</span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {/* Brand Library Drawer Overlay */}
@@ -399,7 +613,11 @@ export default function DiscoveryChat() {
                                 : 'bg-slate-800/90 text-slate-200 rounded-bl-none border border-slate-700/50 backdrop-blur-sm'
                                 }`}>
                                 {msg.role === 'ai' ? (
-                                    <MessageContent content={msg.content.replace(/```json[\s\S]*?```/g, '').trim()} />
+                                    msg.content.startsWith('[RED TEAM]') ? (
+                                        <RedTeamCritique content={msg.content} />
+                                    ) : (
+                                        <MessageContent content={msg.content.replace(/```json[\s\S]*?```/g, '').trim()} />
+                                    )
                                 ) : (
                                     <div className="whitespace-pre-wrap">{msg.content}</div>
                                 )}

@@ -47,36 +47,46 @@ const JSON_SCHEMA = `
 }
 `;
 
-async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
+import { getCachedAgentResponse, setCachedAgentResponse } from '@/app/lib/cacheService';
+
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000, onRetry?: (attempt: number) => void): Promise<T> {
     try {
         return await fn();
     } catch (error: any) {
-        if (retries > 0 && (error.message?.includes('429') || error.status === 429 || error.message?.includes('quota'))) {
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return withRetry(fn, retries - 1, delay * 2);
+        if (retries > 0) {
+            const shouldRetry = error.message?.includes('429') ||
+                error.status === 429 ||
+                error.message?.includes('quota') ||
+                error.status >= 500; // Retry on server errors too
+
+            if (shouldRetry) {
+                if (onRetry) onRetry(retries);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return withRetry(fn, retries - 1, delay * 2, onRetry);
+            }
         }
         throw error;
     }
 }
 
-async function runAgent(apiKey: string, systemPrompt: string, userContent: string, imageName?: string) {
+async function runAgent(apiKey: string, systemPrompt: string, userContent: string, imageName?: string, onRetry?: () => void) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
         model: MODEL_NAME,
         systemInstruction: systemPrompt,
-        // tools: [{ googleSearchRetrieval: {} }]
-        // Note: Enabling explicit tool requires Project ID config in some versions.
-        // For now, relying on the 'gemini-2.0-flash' internal knowledge + prompt 'SEARCH_TOOL' instruction simulation until full config is set.
     });
 
     return await withRetry(async () => {
-        if (imageName) { // Image processing if needed for specialized agents
-            // Not implemented for sub-agents to save tokens unless critical
+        if (imageName) {
             return (await model.generateContent(userContent)).response.text();
         }
         return (await model.generateContent(userContent)).response.text();
+    }, 3, 1500, (attempt) => {
+        if (onRetry) onRetry();
     });
 }
+
+
 
 export async function POST(req: Request) {
     try {
@@ -90,140 +100,157 @@ export async function POST(req: Request) {
         const genAI = new GoogleGenerativeAI(apiKey);
         const lastUserMessage = newMessage.content;
 
-        // 1. AŞAMA: TEMEL ANALİZ (Sociologist & Psychologist - Paralel)
-        console.log("--- FAZ 1: TEMEL ANALİZ ---");
-        const [sociologistReport, psychologistReport] = await Promise.all([
-            runAgent(apiKey, AGENT_PROMPTS.SOCIOLOGIST, `Analiz et: ${lastUserMessage}`),
-            runAgent(apiKey, AGENT_PROMPTS.PSYCHOLOGIST, `Analiz et: ${lastUserMessage}`)
-        ]);
+        // Use Encoder for streaming
+        const encoder = new TextEncoder();
 
-        // 2. AŞAMA: GÖRSEL STRATEJİ (Strategist - Faz 1'den beslenir)
-        console.log("--- FAZ 2: GÖRSEL STRATEJİ ---");
-        const stratInput = `
-        KULLANICI TALEBİ: ${lastUserMessage}
-        SOSYOLOG RAPORU: ${sociologistReport}
-        PSİKOLOG RAPORU: ${psychologistReport}
-        
-        GÖREV: Bu analizlere dayanarak görsel stratejiyi oluştur.
-        `;
-        const strategistReport = await runAgent(apiKey, AGENT_PROMPTS.STRATEGIST, stratInput);
+        const stream = new ReadableStream({
+            async start(controller) {
+                // Helper to send text chunks
+                const send = (text: string) => controller.enqueue(encoder.encode(text));
 
-        // 3. AŞAMA: PAZARLAMA VE BÜYÜME (Marketeer - Faz 1 ve 2'den beslenir)
-        console.log("--- FAZ 3: PAZARLAMA STRATEJİSİ ---");
-        const marketInput = `
-        KULLANICI TALEBİ: ${lastUserMessage}
-        SOSYOLOG RAPORU: ${sociologistReport}
-        PSİKOLOG RAPORU: ${psychologistReport}
-        STRATEJİST RAPORU: ${strategistReport}
+                // Helper to send events (Hidden from chat, used for UI)
+                const sendEvent = (event: string, meta?: string) => {
+                    const payload = JSON.stringify({ event, meta });
+                    controller.enqueue(encoder.encode(`__EVENT__${payload}__EVENT__`));
+                };
 
-        GÖREV: Bu marka kimliğine uygun pazarlama ve büyüme stratejisini oluştur.
-        `;
-        const marketeerReport = await runAgent(apiKey, AGENT_PROMPTS.MARKETEER, marketInput);
+                try {
+                    // 1. AŞAMA: TEMEL ANALİZ (Sociologist & Psychologist - Paralel)
+                    sendEvent('AGENT_START', 'SOSYOLOG');
+                    sendEvent('AGENT_START', 'PSİKOLOG');
 
-        // 4. AŞAMA: RED TEAM / CRITIC (Tüm çalışmayı denetler)
-        console.log("--- FAZ 4: RED TEAM DENETİMİ ---");
-        const criticInput = `
-        KULLANICI TALEBİ: ${lastUserMessage}
-        --- MEVCUT ANALİZLER ---
-        [SOSYOLOG]: ${sociologistReport}
-        [PSİKOLOG]: ${psychologistReport}
-        [STRATEJİST]: ${strategistReport}
-        [PAZARLAMACI]: ${marketeerReport}
+                    // Check Cache (Firebase Persistent)
+                    const [cachedSocio, cachedPsycho] = await Promise.all([
+                        getCachedAgentResponse(lastUserMessage, 'SOCIOLOGIST'),
+                        getCachedAgentResponse(lastUserMessage, 'PSYCHOLOGIST')
+                    ]);
 
-        GÖREV: Bu taslak stratejiyi 'Klişe', 'Risk' ve 'Zayıf Nokta' açısından acımasızca eleştir.
-        `;
-        const criticReport = await runAgent(apiKey, AGENT_PROMPTS.CRITIC, criticInput);
+                    let socioReport = "", psychoReport = "";
 
+                    if (cachedSocio && cachedPsycho) {
+                        socioReport = cachedSocio;
+                        psychoReport = cachedPsycho;
+                        sendEvent('AGENT_LOG', '[CACHE HIT]: Pazar verileri kalıcı hafızadan (Firebase) yüklendi.');
+                    } else {
+                        // Real API Call with Smart Retry
+                        sendEvent('AGENT_LOG', '[SOSYOLOG]: Küresel trendler ve sektör verileri taranıyor...');
+                        sendEvent('AGENT_LOG', '[PSİKOLOG]: Hedef kitle bilinçaltı haritası çıkarılıyor...');
 
-        console.log("--- TÜM RAPORLAR HAZIR: SAVAŞ ODASI ---");
+                        const [socio, psycho] = await Promise.all([
+                            runAgent(apiKey, AGENT_PROMPTS.SOCIOLOGIST, `Analiz et: ${lastUserMessage}`, undefined,
+                                () => sendEvent('AGENT_LOG', '[SOSYOLOG]: Bağlantı gecikmesi. Tekrar deneniyor...')
+                            ),
+                            runAgent(apiKey, AGENT_PROMPTS.PSYCHOLOGIST, `Analiz et: ${lastUserMessage}`, undefined,
+                                () => sendEvent('AGENT_LOG', '[PSİKOLOG]: Bağlantı gecikmesi. Tekrar deneniyor...')
+                            )
+                        ]);
 
-        // 4. AŞAMA: SAVAŞ ODASI (WAR ROOM)
-        const warRoomContext = `
-GÖREV: Aşağıdaki kullanıcı talebi için uzman ekipten gelen raporları sentezle ve nihai stratejiyi belirle.
+                        socioReport = socio;
+                        psychoReport = psycho;
 
-KULLANICI TALEBİ: "${lastUserMessage}"
+                        // Update Cache (Async - Fire and Forget)
+                        setCachedAgentResponse(lastUserMessage, 'SOCIOLOGIST', socio);
+                        setCachedAgentResponse(lastUserMessage, 'PSYCHOLOGIST', psycho);
+                    }
 
---- UZMAN RAPORLARI ---
-[SOSYOLOG RAPORU]:
-${sociologistReport}
+                    sendEvent('AGENT_DONE', 'SOSYOLOG');
+                    sendEvent('AGENT_DONE', 'PSİKOLOG');
 
-[PSİKOLOG RAPORU]:
-${psychologistReport}
+                    // 2. AŞAMA: GÖRSEL STRATEJİ
+                    sendEvent('AGENT_START', 'STRATEJİST');
+                    sendEvent('AGENT_LOG', '[STRATEJİST]: Veriler görsel dile çevriliyor...');
 
-[STRATEJİST RAPORU]:
-${strategistReport}
+                    const stratInput = `
+                    KULLANICI TALEBİ: ${lastUserMessage}
+                    SOSYOLOG RAPORU: ${socioReport}
+                    PSİKOLOG RAPORU: ${psychoReport}
+                    GÖREV: Bu analizlere dayanarak görsel stratejiyi oluştur.
+                    `;
+                    const strategistReport = await runAgent(apiKey, AGENT_PROMPTS.STRATEGIST, stratInput);
+                    sendEvent('AGENT_DONE', 'STRATEJİST');
 
-[PAZARLAMA UZMANI RAPORU]:
-${marketeerReport}
+                    // 3. AŞAMA: PAZARLAMA (Marketeer)
+                    sendEvent('AGENT_START', 'MARKETEER');
+                    sendEvent('AGENT_LOG', '[PAZARLAMACI]: Büyüme ve konumlandırma kurgulanıyor...');
+                    const marketInput = `
+                    KULLANICI TALEBİ: ${lastUserMessage}
+                    STRATEJİST RAPORU: ${strategistReport}
+                    GÖREV: Pazarlama stratejisini oluştur.
+                    `;
+                    const marketeerReport = await runAgent(apiKey, AGENT_PROMPTS.MARKETEER, marketInput);
+                    sendEvent('AGENT_DONE', 'MARKETEER');
 
-[RED TEAM / DENETÇİ RAPORU]:
-${criticReport}
+                    // 4. AŞAMA: RED TEAM (Critic)
+                    sendEvent('AGENT_START', 'CRITIC');
+                    sendEvent('AGENT_LOG', '[RED TEAM]: Risk analizi ve açık arama başlatıldı...');
+                    const criticInput = `
+                    STRATEJİ: ${strategistReport}
+                    GÖREV: Zayıf noktaları bul ve sertçe eleştir.
+                    `;
+                    const criticReport = await runAgent(apiKey, AGENT_PROMPTS.CRITIC, criticInput);
+                    sendEvent('CRITIC_REPORT', criticReport);
+                    sendEvent('AGENT_DONE', 'CRITIC');
 
---- TALİMAT ---
---- TALİMAT ---
-Bu raporları kullanarak tam kapsamlı markayı inşa et. Tüm uzmanların önerilerini birleştir.
-ÖZELLİKLE DIKKAT ET: Denetçi'nin (Red Team) uyarılarını mutlaka dikkate al ve stratejideki riskli kısımları revize et. Eğer Denetçi 'Red' verdiyse o kısmı düzeltmeden final raporu oluşturma.
-Pazarlamacı'nın ticari kararlarına güven.
+                    // 5. AŞAMA: DİREKTÖR (Final Stream)
+                    sendEvent('AGENT_START', 'DİREKTÖR');
+                    sendEvent('AGENT_LOG', '[DİREKTÖR]: Tüm raporlar masamda. Sentez yapılıyor...');
 
-ÖNEMLİ: Çıktıyı İKİ BÖLÜM halinde ver:
-1. "MASTER BRAND BLUEPRINT" Markdown Raporu (System Prompt'ta belirtilen şablona uygun).
-2. JSON Veri Bloğu (System Prompt'ta belirtilen şablona uygun).
-`;
+                    const warRoomContext = `
+                    GÖREV: Aşağıdaki raporları kullanarak nihai stratejiyi belirle.
+                    
+                    KULLANICI TALEBİ: "${lastUserMessage}"
+                    
+                    [UZMAN RAPORLARI ÖZETİ]:
+                    - Sosyolog: ${socioReport.substring(0, 500)}...
+                    - Psikolog: ${psychoReport.substring(0, 500)}...
+                    - Stratejist: ${strategistReport}
+                    - Pazarlamacı: ${marketeerReport}
+                    - RED TEAM UYARISI: ${criticReport}
+                    
+                    TALİMAT: Red Team'in eleştirilerini dikkate alarak final raporu yaz.
+                    1. "MASTER BRAND BLUEPRINT" Markdown Raporu.
+                    2. JSON Veri Bloğu (En sonda).
+                    `;
 
-        // 3. AŞAMA: DİREKTÖRÜN KARARI (Final Synthesis)
-        const historyContext = await getHistorySummaryForAI();
-        const mainSystemPrompt = `
-${AGENT_PROMPTS.DIRECTOR}
+                    const historyContext = await getHistorySummaryForAI();
+                    const mainSystemPrompt = `
+                    ${AGENT_PROMPTS.DIRECTOR}
+                    ${historyContext ? `\n### GEÇMİŞ BİLGİ:\n${historyContext}` : ""}
+                    ### FORMAT:
+                    \`\`\`json
+                    ${JSON_SCHEMA}
+                    \`\`\`
+                    `;
 
-### KESİN ÇIKTI FORMATI - BÖLÜM 2 (JSON):
-Raporun EN SONUNDA, arayüzün çalışması için aşağıdaki JSON şemasını doldurarak bir kod bloğu oluştur.
-\`\`\`json
-${JSON_SCHEMA}
-\`\`\`
+                    const model = genAI.getGenerativeModel({
+                        model: MODEL_NAME,
+                        systemInstruction: mainSystemPrompt
+                    });
 
-### UNUTMA:
-- Sen bir yapay zeka değilsin, bir ajans başkanısın.
-- Uzmanlarının (Sosyolog, Psikolog, Stratejist) verdiği aklı kullan ama kararı sen ver.
-- Kullanıcıya rapor verirken "Ekibimizle yaptığımız toplantıda sosyologumuz şuna dikkat çekti..." gibi ifadeler kullan. Bu yaşayan bir şirket hissi verir.
-${historyContext ? `\n### GEÇMİŞ BİLGİ:\n${historyContext}` : ""}
-`;
+                    // Streaming Chat
+                    const chat = model.startChat({ history: [] }); // Simplified history for stream
+                    const result = await chat.sendMessageStream(warRoomContext);
 
-        // Direktör için chat oturumu başlatıyoruz (Geçmişi hatırlaması için)
-        const model = genAI.getGenerativeModel({
-            model: MODEL_NAME,
-            systemInstruction: mainSystemPrompt
+                    for await (const chunk of result.stream) {
+                        const chunkText = chunk.text();
+                        send(chunkText);
+                    }
+
+                    sendEvent('AGENT_DONE', 'DİREKTÖR');
+                    controller.close();
+
+                } catch (error: any) {
+                    controller.error(error);
+                }
+            }
         });
 
-        // Chat geçmişini düzenle (Sadece son birkaç mesajı tutmak yeterli olabilir, ama bağlam için hepsini veriyoruz)
-        let history: any[] = [];
-        if (messages && Array.isArray(messages)) {
-            history = messages.map((m: any) => ({
-                role: m.role === 'user' ? 'user' : 'model',
-                parts: [{ text: m.content }],
-            }));
-            // Model role ile başlayamaz kuralı için temizlik
-            while (history.length > 0 && history[0].role === 'model') {
-                history.shift();
-            }
-        }
-
-        const chat = model.startChat({ history });
-
-        // Direktöre "Image" yeteneği de ekleyelim
-        const result = await withRetry(async () => {
-            if (newMessage?.image) {
-                const base64Data = newMessage.image.split(',')[1];
-                const mimeType = newMessage.image.split(';')[0].split(':')[1];
-                return await chat.sendMessage([
-                    { inlineData: { data: base64Data, mimeType } },
-                    { text: warRoomContext } // Görüntüyle birlikte analiz raporlarını da veriyoruz
-                ]);
-            }
-            return await chat.sendMessage(warRoomContext);
+        return new Response(stream, {
+            headers: {
+                'Content-Type': 'text/plain; charset=utf-8',
+                'Transfer-Encoding': 'chunked',
+            },
         });
-
-        const response = await result.response;
-        return NextResponse.json({ content: response.text() });
 
     } catch (error: any) {
         console.error('API Error:', error);
