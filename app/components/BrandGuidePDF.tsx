@@ -139,12 +139,6 @@ export default function BrandGuidePDF() {
                         <h2 className="text-2xl font-bold uppercase tracking-widest text-slate-800">04. Content & Digital</h2>
                     </div>
 
-                    {identity.visuals?.social_url && (
-                        <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
-                            <img src={identity.visuals.social_url} className="w-full h-auto" alt="Brand Social Visual" />
-                        </div>
-                    )}
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
                             <div>
@@ -152,8 +146,8 @@ export default function BrandGuidePDF() {
                                 <p className="text-lg font-medium text-slate-800">{identity.slogan_tone.tone_of_voice}</p>
                             </div>
                             <div>
-                                <h3 className="font-bold text-slate-500 uppercase text-xs mb-1">Social Media Language</h3>
-                                <p className="text-slate-700">{identity.social_media_style.visual_language}</p>
+                                <h3 className="font-bold text-slate-500 uppercase text-xs mb-1">Tagline</h3>
+                                <p className="text-slate-700 italic">"{identity.slogan_tone.tagline}"</p>
                             </div>
                         </div>
                         <div className="p-6 bg-slate-900 text-white rounded-xl">
