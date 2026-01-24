@@ -2,13 +2,10 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBrandStore } from '../lib/store';
-import { Palette, Users, Type, Mic, Monitor, Share2, Target, Fingerprint, Download, Presentation, LayoutGrid, Image as ImageIcon, Edit3, FileDown, Printer, Sparkles, RefreshCcw, CheckCircle2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Palette, Users, Type, Mic, Target, Fingerprint, Download, Presentation, LayoutGrid, Edit3, FileDown, Printer, RefreshCcw, CheckCircle2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BrandIdentity } from '../lib/types';
 import { useEffect, useState } from 'react';
-import { MacbookPreview } from './mockups/MacbookPreview';
-import { PhonePreview } from './mockups/PhonePreview';
 import { BusinessCard } from './mockups/BusinessCard';
-import { LandingPagePreview } from './mockups/LandingPagePreview';
 import BrandGuidePDF from './BrandGuidePDF';
 import { triggerCanvaAutofill } from '../lib/canvaService';
 import { markAsConfirmed } from '../lib/brandsService';
@@ -54,143 +51,6 @@ const ColorSwatch = ({ color, label }: { color: string; label: string }) => {
     );
 };
 
-// Helper for Web UI Preview
-const WebUIPreview = ({ data, fullIdentity }: { data: any, fullIdentity?: BrandIdentity }) => {
-    if (!data || (!data.button_style && !data.border_radius)) return null;
-
-    const getRadius = (text: string) => {
-        if (!text) return '4px';
-        if (text.toLowerCase().includes('yuvarlak') || text.toLowerCase().includes('round')) return '12px';
-        if (text.toLowerCase().includes('keskin') || text.toLowerCase().includes('sharp') || text.toLowerCase().includes('kare')) return '0px';
-        if (text.includes('px')) return text.match(/\d+px/)?.[0] || '4px';
-        return '4px';
-    };
-
-    const getShadow = (text: string) => {
-        if (!text) return 'none';
-        if (text.toLowerCase().includes('gölge') || text.toLowerCase().includes('shadow')) return '0 4px 6px -1px rgba(0, 0, 0, 0.3)';
-        if (text.toLowerCase().includes('flat') || text.toLowerCase().includes('düz')) return 'none';
-        return 'none';
-    };
-
-    const radius = getRadius(data.border_radius || '');
-    const shadow = getShadow(data.button_style || '');
-    const primaryColor = fullIdentity?.color_palette.primary || '#333';
-    const accentColor = fullIdentity?.color_palette.accent || '#888';
-    const headingFont = fullIdentity?.typography.heading_font || 'sans-serif';
-    const heroImageUrl = fullIdentity?.visuals?.hero_url;
-
-    return (
-        <div className="w-full h-full bg-white flex flex-col items-center justify-center relative overflow-hidden group">
-            {heroImageUrl && (
-                <img src={heroImageUrl} className="absolute inset-0 w-full h-full object-cover opacity-80" alt="Hero Brand Visual" />
-            )}
-            <div className="absolute inset-0 opacity-10" style={{ background: `radial-gradient(circle at top right, ${accentColor}, transparent)` }}></div>
-            <div className="text-center px-4 relative z-10 bg-white/40 backdrop-blur-[2px] p-6 rounded-lg">
-                <h2 className="text-2xl font-bold mb-2 text-gray-900" style={{ fontFamily: headingFont, color: primaryColor }}>
-                    {fullIdentity?.slogan_tone.tagline || "Your Vision"}
-                </h2>
-                <div className="h-1 w-16 bg-current mx-auto mb-4 rounded-full" style={{ color: accentColor }}></div>
-                <button
-                    className="px-6 py-2 text-sm font-bold text-white transition-all transform hover:scale-105"
-                    style={{
-                        borderRadius: radius,
-                        boxShadow: shadow,
-                        backgroundColor: primaryColor,
-                        fontFamily: headingFont
-                    }}
-                >
-                    Get Started
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// Helper for Social Media Preview
-const SocialMediaPreview = ({ data, fullIdentity }: { data: any, fullIdentity?: BrandIdentity }) => {
-    if (!data || (!data.visual_language && !data.grid_layout)) return null;
-
-    const primaryColor = fullIdentity?.color_palette.primary || '#000';
-    const accentColor = fullIdentity?.color_palette.accent || '#888';
-    const font = fullIdentity?.typography.heading_font || 'sans-serif';
-    const bodyFont = fullIdentity?.typography.body_font || 'sans-serif';
-    const socialImageUrl = fullIdentity?.visuals?.social_url;
-    const logoUrl = fullIdentity?.visuals?.logo_url;
-    const brandName = fullIdentity?.brand_name || fullIdentity?.slogan_tone.tagline?.split(',')[0] || "Brand";
-
-    return (
-        <div className="w-full h-full flex flex-col bg-white text-slate-900 font-sans">
-            {/* Instagram Header */}
-            <div className="h-14 flex items-center px-4 justify-between shrink-0 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
-                        {logoUrl ? <img src={logoUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: primaryColor }} />}
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="font-bold text-[13px] leading-tight flex items-center gap-1">
-                            {brandName.toLowerCase().replace(/\s+/g, '_')}
-                            <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
-                                <CheckCircle2 className="w-2 h-2 text-white" />
-                            </div>
-                        </span>
-                        <span className="text-[11px] text-slate-500 leading-tight">Sponsorlu</span>
-                    </div>
-                </div>
-                <button className="text-slate-400">•••</button>
-            </div>
-
-            {/* Post Content */}
-            <div className="flex-1 overflow-auto bg-slate-50 flex flex-col">
-                <div className="aspect-square w-full relative flex items-center justify-center overflow-hidden bg-slate-200">
-                    {socialImageUrl ? (
-                        <img src={socialImageUrl} className="w-full h-full object-cover" alt="Social Post" />
-                    ) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center" style={{ background: `linear-gradient(45deg, ${primaryColor}, ${accentColor})` }}>
-                            <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px]"></div>
-                            <h4 className="text-white relative z-10 text-3xl font-black italic tracking-tighter drop-shadow-2xl" style={{ fontFamily: font }}>
-                                {fullIdentity?.slogan_tone.tagline?.split(',')[0]}
-                            </h4>
-                            <p className="text-white/80 relative z-10 text-sm mt-4 font-medium uppercase tracking-[0.2em]" style={{ fontFamily: bodyFont }}>
-                                {fullIdentity?.brand_dna.usp?.substring(0, 40)}...
-                            </p>
-                            <div className="mt-8 px-6 py-2 bg-white text-slate-900 text-xs font-bold rounded-sm shadow-xl relative z-10">
-                                ŞİMDİ İNCELE
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Engagement Bar */}
-                <div className="p-3 space-y-2 bg-white">
-                    <div className="flex items-center justify-between text-slate-800">
-                        <div className="flex items-center gap-4">
-                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M16.792 3.904A4.989 4.989 0 0 1 21.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.309-2.143-1.823-4.303-3.752C5.141 14.077 2.5 12.194 2.5 9.122a4.989 4.989 0 0 1 4.708-5.218 4.21 4.21 0 0 1 3.675 1.941c.03.044.07.086.117.126a4.21 4.21 0 0 1 3.675-1.941c.03-.044.07-.086.117-.126Z" /></svg>
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m.516 4.842C10.15 14.59 11 13.39 11 12c0-1.39-.85-2.59-1.8-3.5m4.3.5C14.45 10 15 10.95 15 12c0 1.05-.55 2-1.5 3m1.8-4.842C16.114 11.062 16.5 11.512 16.5 12c0 .488-.386.938-1.2 1.342M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        </div>
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-                    </div>
-                    <div className="text-[13px] font-bold">1,204 beğenme</div>
-                    <div className="text-[13px] leading-snug">
-                        <span className="font-bold mr-2">{brandName.toLowerCase().replace(/\s+/g, '_')}</span>
-                        {fullIdentity?.slogan_tone.tagline?.split(',')[1] || "Modern ve vizyoner bir gelecek için..."}
-                        <span className="text-blue-900 ml-1">#brand #design #expert</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 uppercase tracking-tight mt-1">2 saat önce</div>
-                </div>
-            </div>
-
-            {/* Tab Bar */}
-            <div className="h-12 border-t flex justify-around items-center shrink-0 bg-white">
-                <div className="w-6 h-6 bg-slate-900 rounded-sm"></div>
-                <div className="w-6 h-6 border-2 border-slate-300 rounded-sm"></div>
-                <div className="w-6 h-6 border-2 border-slate-300 rounded-sm"></div>
-                <div className="w-6 h-6 border-2 border-slate-300 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold">B</div>
-            </div>
-        </div>
-    );
-};
 
 const GRID_MAPPING: {
     key: keyof BrandIdentity;
@@ -259,26 +119,6 @@ const GRID_MAPPING: {
             ) : null
         },
         {
-            key: 'web_ui_logic',
-            title: 'Web UI Language',
-            icon: Monitor,
-            render: (data, fullIdentity) => (
-                <div className="h-24 rounded-lg overflow-hidden border border-slate-700 bg-slate-950/50">
-                    <WebUIPreview data={data} fullIdentity={fullIdentity} />
-                </div>
-            )
-        },
-        {
-            key: 'social_media_style',
-            title: 'Social Media',
-            icon: Share2,
-            render: (data, fullIdentity) => (
-                <div className="h-24 rounded-lg overflow-hidden border border-slate-700 bg-slate-950/50">
-                    <SocialMediaPreview data={data} fullIdentity={fullIdentity} />
-                </div>
-            )
-        },
-        {
             key: 'competitor_analysis',
             title: 'Market Gap',
             icon: Target,
@@ -323,19 +163,14 @@ const ExpandedModal = ({ isOpen, onClose, children, title }: { isOpen: boolean; 
         </AnimatePresence>
     );
 };
-
 export default function BrandIdentityBoard() {
     const { identity, updatePartialIdentity, currentBrandId, updateIdentity } = useBrandStore();
     const [viewMode, setViewMode] = useState<'strategy' | 'presentation' | 'guide'>('strategy');
-    const [prompts, setPrompts] = useState<{ hero: string, social: string, logo: string } | null>(null);
     const [editingKey, setEditingKey] = useState<keyof BrandIdentity | null>(null);
-    const [editData, setEditData] = useState<Record<string, unknown> | string | null>(null);
-    const [isGenerating, setIsGenerating] = useState(false);
+    const [editData, setEditData] = useState<any>(null);
     const [isCanvaSyncing, setIsCanvaSyncing] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
     const [activeSlide, setActiveSlide] = useState(0);
-    const [expandedView, setExpandedView] = useState<{ key: string; title: string } | null>(null);
-
     const [regeneratingKey, setRegeneratingKey] = useState<keyof BrandIdentity | null>(null);
 
     const handleConfirm = async () => {
@@ -420,46 +255,6 @@ export default function BrandIdentityBoard() {
         downloadAnchorNode.remove();
     };
 
-    useEffect(() => {
-        if (identity.brand_dna.purpose) {
-            setPrompts({
-                hero: `Modern website landing page hero section for ${identity.brand_dna.purpose}. Industry: ${identity.metadata?.industry || 'Service'}. Colors: ${identity.color_palette.primary}.`,
-                social: `Professional Instagram post for ${identity.slogan_tone.tagline}. Vibe: ${identity.social_media_style.visual_language}.`,
-                logo: `Minimalist logo symbol for ${identity.brand_dna.purpose}. Symbolizes: ${identity.brand_dna.values?.[0] || 'Quality'}.`
-            });
-        }
-    }, [identity]);
-
-    const handleGenerateVisuals = async () => {
-        if (!prompts) return;
-        setIsGenerating(true);
-        try {
-            const response = await fetch('/api/generate-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identity, prompts })
-            });
-
-            if (!response.ok) throw new Error("Görsel üretimi başarısız oldu.");
-
-            const data = await response.json();
-
-            updatePartialIdentity({
-                visuals: {
-                    hero_url: data.hero_url,
-                    social_url: data.social_url,
-                    logo_url: data.logo_url
-                }
-            });
-
-            alert("Varlıklar başarıyla üretildi! Artık Sunum Modu'ndan inceleyebilirsiniz.");
-        } catch (error) {
-            console.error("AI Generation Error", error);
-            alert("Görsel üretiminde hata oluştu.");
-        } finally {
-            setIsGenerating(false);
-        }
-    };
 
     const startEditing = (key: keyof BrandIdentity) => {
         setEditingKey(key);
@@ -540,24 +335,6 @@ export default function BrandIdentityBoard() {
                 )
             },
             {
-                title: 'Website Experience',
-                desc: 'Digital touchpoint mockup with your UI logic applied.',
-                component: <LandingPagePreview identity={identity} />
-            },
-            {
-                title: 'Social Media Presence',
-                desc: 'Visual language consistently applied to social grids.',
-                component: (
-                    <div className="bg-slate-200 w-full h-full flex items-center justify-center p-4">
-                        <div className="w-[300px] h-full">
-                            <PhonePreview>
-                                <SocialMediaPreview data={identity.social_media_style} fullIdentity={identity} />
-                            </PhonePreview>
-                        </div>
-                    </div>
-                )
-            },
-            {
                 title: 'Professional Collateral',
                 desc: 'How the brand translates to physical brand assets.',
                 component: (
@@ -634,9 +411,6 @@ export default function BrandIdentityBoard() {
                                 {isConfirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Finalize & Learn
                             </button>
                         )}
-                        <button onClick={handleGenerateVisuals} disabled={isGenerating || !identity.brand_dna.purpose} className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-all disabled:opacity-50 uppercase tracking-tighter text-xs">
-                            {isGenerating ? <Sparkles className="w-4 h-4 animate-spin text-white" /> : <Sparkles className="w-4 h-4" />} AI Visuals
-                        </button>
                         <button onClick={handlePrint} className="p-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg border border-slate-700"><Printer className="w-4 h-4" /></button>
                         <button onClick={handleExport} className="p-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg border border-slate-700"><Download className="w-4 h-4" /></button>
                     </div>
@@ -649,7 +423,6 @@ export default function BrandIdentityBoard() {
                         const sectionData = identity[card.key];
                         const content = card.render(sectionData, identity);
                         const hasContent = !!content;
-                        const isVisual = card.key === 'web_ui_logic' || card.key === 'social_media_style';
 
                         return (
                             <motion.div key={card.key} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
@@ -661,11 +434,6 @@ export default function BrandIdentityBoard() {
                                     </div>
                                     {hasContent && (
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {isVisual && (
-                                                <button onClick={() => setExpandedView({ key: card.key, title: card.title })} className="p-1.5 hover:bg-slate-800 rounded-md text-slate-400 hover:text-white" title="Büyüt">
-                                                    <LayoutGrid className="w-3.5 h-3.5" />
-                                                </button>
-                                            )}
                                             <button
                                                 onClick={() => handleRegenerate(card.key as keyof BrandIdentity)}
                                                 disabled={regeneratingKey === card.key}
@@ -680,8 +448,7 @@ export default function BrandIdentityBoard() {
                                         </div>
                                     )}
                                 </div>
-                                <div className={`flex-1 overflow-hidden ${isVisual && hasContent ? 'cursor-zoom-in hover:scale-[1.02] transition-transform' : ''}`}
-                                    onClick={() => isVisual && hasContent && setExpandedView({ key: card.key, title: card.title })}>
+                                <div className="flex-1 overflow-hidden">
                                     {hasContent ? (
                                         <div className="text-sm text-slate-200 leading-relaxed font-medium">{content}</div>
                                     ) : (
@@ -700,26 +467,6 @@ export default function BrandIdentityBoard() {
                 </div>
             )}
             {renderEditModal()}
-            <ExpandedModal
-                isOpen={!!expandedView}
-                onClose={() => setExpandedView(null)}
-                title={expandedView?.title || ''}
-            >
-                {expandedView?.key === 'web_ui_logic' && (
-                    <div className="w-full aspect-video">
-                        <LandingPagePreview identity={identity} />
-                    </div>
-                )}
-                {expandedView?.key === 'social_media_style' && (
-                    <div className="w-full flex justify-center p-8 bg-slate-100 h-full overflow-auto">
-                        <div className="w-[400px]">
-                            <PhonePreview>
-                                <SocialMediaPreview data={identity.social_media_style} fullIdentity={identity} />
-                            </PhonePreview>
-                        </div>
-                    </div>
-                )}
-            </ExpandedModal>
         </div>
     );
 }

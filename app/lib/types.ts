@@ -29,19 +29,6 @@ export type SloganTone = {
   keywords: string[];
 };
 
-export type WebUiLogic = {
-  border_radius: string;
-  spacing_style: string;
-  button_style: string;
-  layout_style?: string;
-};
-
-export type SocialMediaStyle = {
-  image_filter: string;
-  grid_layout: string;
-  visual_language: string;
-};
-
 export type CompetitorAnalysis = {
   market_gap: string;
   differentiation: string;
@@ -54,8 +41,6 @@ export type BrandIdentity = {
   color_palette: ColorPalette;
   typography: Typography;
   slogan_tone: SloganTone;
-  web_ui_logic: WebUiLogic;
-  social_media_style: SocialMediaStyle;
   competitor_analysis: CompetitorAnalysis;
   visuals?: {
     hero_url?: string;
@@ -77,8 +62,6 @@ export const INITIAL_BRAND_IDENTITY: BrandIdentity = {
   color_palette: { primary: "", secondary: "", accent: "", rationale: "" },
   typography: { heading_font: "", body_font: "", style_rationale: "" },
   slogan_tone: { tagline: "", tone_of_voice: "", keywords: [] },
-  web_ui_logic: { border_radius: "", spacing_style: "", button_style: "", layout_style: "SaaS" },
-  social_media_style: { image_filter: "", grid_layout: "", visual_language: "" },
   competitor_analysis: { market_gap: "", differentiation: "" },
   visuals: {
     hero_url: "",
