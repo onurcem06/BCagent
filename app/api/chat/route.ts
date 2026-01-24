@@ -49,6 +49,7 @@ const JSON_SCHEMA = `
 
 import { getCachedAgentResponse, setCachedAgentResponse } from '@/app/lib/cacheService';
 import { scrapeWebsite } from '@/app/lib/scrapeService';
+import { getDesignSystemSummary, getFontPairingSummary } from '@/app/lib/designKnowledge';
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000, onRetry?: (attempt: number) => void): Promise<T> {
     try {
@@ -216,7 +217,17 @@ export async function POST(req: Request) {
                     KULLANICI TALEBİ: ${lastUserMessage}
                     SOSYOLOG RAPORU: ${socioReport}
                     PSİKOLOG RAPORU: ${psychoReport}
-                    GÖREV: Bu analizlere dayanarak görsel stratejiyi oluştur.
+                    
+                    [EKSTRA TASARIM KÜTÜPHANESİ - REFERANS AL]:
+                    Aşağıdaki profesyonel tasarım sistemlerini ve font ikililerini referans alarak en uygun seçimi yap. Rastgele değil, bu listeden bir eşleşme seç:
+                    
+                    --- LİDER TASARIM SİSTEMLERİ ---
+                    ${getDesignSystemSummary()}
+                    
+                    --- TREND FONT İKİLİLERİ (2025) ---
+                    ${getFontPairingSummary()}
+                    
+                    GÖREV: Bu analizlere ve yukarıdaki tasarım kütüphanesine dayanarak görsel stratejiyi oluştur. Marka ruhuna en uygun 'Tasarım Sistemini' ve 'Font İkilisini' seç ve nedenini açıkla.
                     `;
                     const strategistReport = await runAgent(apiKey, AGENT_PROMPTS.STRATEGIST, stratInput);
                     sendEvent('AGENT_DONE', 'STRATEJİST');
